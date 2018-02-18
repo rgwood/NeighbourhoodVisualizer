@@ -1,6 +1,20 @@
 <h1>Setback Visualizer</h1>
 <div>blah blah blah blah</div>
-<form #visualizerForm="ngForm">
+
+<form [formGroup]="inputForm" novalidate>
+    <label class="center-block">Width:
+      <input class="form-control" formControlName="lotWidth">
+    </label>
+    <label class="center-block">Height:
+        <input class="form-control" formControlName="lotHeight">
+    </label>
+    </form>
+    
+    <p>Width value: {{ inputForm.value | json }}</p>
+    <p>Width status: {{ inputForm.status | json }}</p>
+    <canvas id="setbackCanvas" width="1000" height="500"></canvas>
+
+<!--<form [formGroup]="inputForm">
     <div class=form-group>
         <label for="widthInput">Width</label>
         <input type="number" [(ngModel)]="lotWidth" name="lotWidth" class="form-control"  id="lotWidthInput" placeholder="33" min="0"/>
@@ -8,5 +22,6 @@
         <input type="number" [(ngModel)]="lotHeight" name="lotHeight" class="form-control"  id="lotHeightInput" placeholder="122" min=0 />
     </div>
 </form>
-<canvas id="setbackCanvas" width="1000" height="500"></canvas>
+
 <div>On a {{lotWidth * lotHeight}} sqft lot, the building is {{bldgArea}} sqft ({{bldgArea / lotArea | percent}})</div>
+-->

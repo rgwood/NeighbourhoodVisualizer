@@ -1,27 +1,49 @@
-<h1>Setback Visualizer</h1>
-<div>blah blah blah blah</div>
-
-<form [formGroup]="inputForm" novalidate>
-    <label class="center-block">Width:
-      <input class="form-control" formControlName="lotWidth">
-    </label>
-    <label class="center-block">Height:
-        <input class="form-control" formControlName="lotHeight">
-    </label>
-    </form>
-    
-    <p>Width value: {{ inputForm.value | json }}</p>
-    <p>Width status: {{ inputForm.status | json }}</p>
-    <canvas id="setbackCanvas" width="1000" height="500"></canvas>
-
-<!--<form [formGroup]="inputForm">
-    <div class=form-group>
-        <label for="widthInput">Width</label>
-        <input type="number" [(ngModel)]="lotWidth" name="lotWidth" class="form-control"  id="lotWidthInput" placeholder="33" min="0"/>
-        <label for="heightInput">Height</label>
-        <input type="number" [(ngModel)]="lotHeight" name="lotHeight" class="form-control"  id="lotHeightInput" placeholder="122" min=0 />
+<div class='container'>
+  <div class='row'>
+    <div class='col-xs-12 col-md-8'>
+      <h1>Setback Visualizer</h1>
+      <form [formGroup]="inputForm" novalidate>
+        <div class="panel panel-primary">
+          <div class="panel-heading">
+            <h3 class="panel-title">Assumptions</h3>
+          </div>
+          <div class="panel-body">
+            <div class="form-group">
+              <input type="radio" value='m' formControlName="units">Square metres
+              <input type="radio" value='ft' formControlName="units">Square feet
+            </div>
+            <div class="form-group">
+              <label class="center-block">Width:
+                <input class="form-control" formControlName="lotWidth">
+              </label>
+              <label class="center-block">Height:
+                <input class="form-control" formControlName="lotHeight">
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">Output</h3>
+        </div>
+        <canvas id="setbackCanvas" width="1000" height="500"></canvas>
+        <p [hidden]="!inputForm.valid ">
+          The building can cover {{bldgArea}} {{inputForm.value.units}}
+          <sup>2</sup> at most, on a {{inputForm.value.lotWidth * inputForm.value.lotHeight}} {{inputForm.value.units}}
+          <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotHeight) | percent}}
+          of the lot.
+        </p>
+      </div>
     </div>
-</form>
+  </div>
+</div>
 
-<div>On a {{lotWidth * lotHeight}} sqft lot, the building is {{bldgArea}} sqft ({{bldgArea / lotArea | percent}})</div>
--->
+
+
+
+<h3>Debug info</h3>
+<p>Width value: {{ inputForm.value.lotWidth | json }}</p>
+<p>Height value: {{ inputForm.value.lotHeight | json }}</p>
+<p>All values: {{ inputForm.value | json }}</p>
+<p>Form status: {{ inputForm.status | json }}</p>

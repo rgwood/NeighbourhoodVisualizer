@@ -1,5 +1,5 @@
 import { Component} from '@angular/core';
-import { FormGroup, FormControl, FormBuilder } from '@angular/forms';
+import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +12,6 @@ export class AppComponent {
   inputForm: FormGroup;
   canvasWidth: number = 1000;
   canvasHeight: number = 500;
-  lotArea: number;
   bldgArea: number;
 
   constructor(private fb: FormBuilder) { // <--- inject FormBuilder
@@ -22,13 +21,13 @@ export class AppComponent {
   createForm() {
     console.log("in createForm()");
     this.inputForm = this.fb.group({
-      lotWidth: 33, // <--- the FormControl called "lotWidth"
-      lotHeight: 122
+      units: 'ft',
+      lotWidth: [33,[Validators.required, Validators.min(1), Validators.pattern("[0-9]+\.?[0-9]*")]], // <--- the FormControl called "lotWidth"
+      lotHeight: [122, [Validators.required, Validators.min(1), Validators.pattern("[0-9]+\.?[0-9]*")]]
     });
   }
 
   ngOnInit(): void {
-
     console.log("in OnInit()");
 
     this.inputForm.valueChanges.subscribe(val => {
@@ -73,7 +72,7 @@ export class AppComponent {
                  this.realUnitToCanvasUnit(frontYardDepth),
                  bldgDrawWidth,
                  bldgDrawHeight);
-
+    this.bldgArea = bldgHeight * bldgWidth;
   }
 
   realUnitToCanvasUnit(xCoordInRealUnits:number): number{

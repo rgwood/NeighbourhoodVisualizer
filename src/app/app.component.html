@@ -2,48 +2,57 @@
   <div class='row'>
     <div class='col-xs-12 col-md-8'>
       <h1>Setback Visualizer</h1>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam iaculis egestas porttitor. Suspendisse potenti. Maecenas
+      et ultrices metus, sed placerat arcu. Integer ligula dolor, commodo a sapien vel, pellentesque dignissim tellus. Suspendisse
+      lobortis, quam semper consequat dictum, sem lorem congue mi, quis iaculis justo ipsum non diam. Nulla facilisi. Duis
+      consectetur mi diam, a malesuada diam porta facilisis. Nulla venenatis mauris at velit tincidunt scelerisque. Fusce
+      venenatis fringilla elit, a maximus dui facilisis vel. Nam at risus nec nibh tincidunt tincidunt a vehicula orci. Donec
+      pellentesque accumsan velit, at malesuada ex.
       <form [formGroup]="inputForm" novalidate>
-        <div class="panel panel-primary">
-          <div class="panel-heading">
-            <h3 class="panel-title">Assumptions</h3>
-          </div>
-          <div class="panel-body">
+        <div class="card border-primary mb-3">
+          <div class="card-header">Input</div>
+          <div class="card-body">
             <div class="form-group">
-              <input type="radio" value='m' formControlName="units">Square metres
-              <input type="radio" value='ft' formControlName="units">Square feet
+              <div>Units</div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" value='m' formControlName="units" id="mUnit">
+                <label class="form-check-label" for="mUnit">Square metres</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
+                <label class="form-check-label" for="ftUnit">Square feet</label>
+              </div>
             </div>
             <div class="form-group">
               <label class="center-block">Width:
-                <input class="form-control" formControlName="lotWidth">
+                <!-- The ngClass is-invalid thing is to map to a Bootstrap class... there's gotta be a better way! -->
+                <input [ngClass]="{'is-invalid': inputForm.controls['lotWidth'].invalid}" class="form-control" formControlName="lotWidth">
               </label>
-              <label class="center-block">Height:
-                <input class="form-control" formControlName="lotHeight">
+              <label class="center-block">Depth:
+                <input [ngClass]="{'is-invalid': inputForm.controls['lotDepth'].invalid}"  class="form-control" formControlName="lotDepth">
               </label>
             </div>
           </div>
         </div>
       </form>
-      <div class="panel panel-primary">
-        <div class="panel-heading">
-          <h3 class="panel-title">Output</h3>
+      <div class="card card-primary">
+        <div class="card-header">Output</div>
+        <div class="card-body">
+          <canvas id="setbackCanvas" width="1000" height="500"></canvas>
+          <p [hidden]="!inputForm.valid ">
+            The building can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}} <sup>2</sup> at most, 
+            on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
+            <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}
+            of the lot.
+          </p>
         </div>
-        <canvas id="setbackCanvas" width="1000" height="500"></canvas>
-        <p [hidden]="!inputForm.valid ">
-          The building can cover {{bldgArea}} {{inputForm.value.units}}
-          <sup>2</sup> at most, on a {{inputForm.value.lotWidth * inputForm.value.lotHeight}} {{inputForm.value.units}}
-          <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotHeight) | percent}}
-          of the lot.
-        </p>
       </div>
     </div>
   </div>
 </div>
 
-
-
-
 <h3>Debug info</h3>
 <p>Width value: {{ inputForm.value.lotWidth | json }}</p>
-<p>Height value: {{ inputForm.value.lotHeight | json }}</p>
+<p>Height value: {{ inputForm.value.lotDepth | json }}</p>
 <p>All values: {{ inputForm.value | json }}</p>
 <p>Form status: {{ inputForm.status | json }}</p>

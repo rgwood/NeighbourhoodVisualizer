@@ -4,7 +4,7 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.scss']
 })
 
 export class AppComponent {
@@ -22,8 +22,8 @@ export class AppComponent {
     console.log("in createForm()");
     this.inputForm = this.fb.group({
       units: 'ft',
-      lotWidth: [33,[Validators.required, Validators.min(1), Validators.pattern("[0-9]+\.?[0-9]*")]], // <--- the FormControl called "lotWidth"
-      lotHeight: [122, [Validators.required, Validators.min(1), Validators.pattern("[0-9]+\.?[0-9]*")]]
+      lotWidth: [33,[Validators.required, Validators.pattern("[0-9]+[.]?[0-9]*$")]], // <--- the FormControl called "lotWidth"
+      lotDepth: [122, [Validators.required, Validators.pattern("[0-9]+[.]?[0-9]*$")]]
     });
   }
 
@@ -44,7 +44,7 @@ export class AppComponent {
     let sideYardPercent= 10;
     let backYardPercent= 45;
 
-    let lotHeight = this.inputForm.get('lotHeight').value;
+    let lotDepth = this.inputForm.get('lotDepth').value;
     let lotWidth = this.inputForm.get('lotWidth').value;
 
     let canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
@@ -52,12 +52,12 @@ export class AppComponent {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    let lotDrawHeight = this.realUnitToCanvasUnit(lotHeight);
+    let lotDrawHeight = this.realUnitToCanvasUnit(lotDepth);
     let lotDrawWidth = this.realUnitToCanvasUnit(lotWidth);
 
     ctx.strokeRect(0,0,lotDrawWidth,lotDrawHeight);
 
-    let bldgHeight = lotHeight * (100 - frontYardPercent - backYardPercent) / 100;
+    let bldgHeight = lotDepth * (100 - frontYardPercent - backYardPercent) / 100;
     let bldgDrawHeight = this.realUnitToCanvasUnit(bldgHeight);
 
     let bldgWidth = lotWidth * (100 - 2*sideYardPercent) / 100;
@@ -65,7 +65,7 @@ export class AppComponent {
 
     ctx.fillStyle = "lightblue";
 
-    let frontYardDepth = lotHeight * frontYardPercent / 100;
+    let frontYardDepth = lotDepth * frontYardPercent / 100;
     let sideyardDepth = lotWidth * sideYardPercent / 100;
 
     ctx.fillRect(this.realUnitToCanvasUnit(sideyardDepth),
@@ -76,7 +76,7 @@ export class AppComponent {
   }
 
   realUnitToCanvasUnit(xCoordInRealUnits:number): number{
-    return xCoordInRealUnits / this.inputForm.get('lotHeight').value * this.canvasHeight;
+    return xCoordInRealUnits / this.inputForm.get('lotDepth').value * this.canvasHeight;
   }
 
 }

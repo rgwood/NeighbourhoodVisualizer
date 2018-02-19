@@ -8,9 +8,21 @@
       consectetur mi diam, a malesuada diam porta facilisis. Nulla venenatis mauris at velit tincidunt scelerisque. Fusce
       venenatis fringilla elit, a maximus dui facilisis vel. Nam at risus nec nibh tincidunt tincidunt a vehicula orci. Donec
       pellentesque accumsan velit, at malesuada ex.
+      <div class="card border-primary mb-3">
+          <div class="card-header">Results</div>
+          <div class="card-body">
+            <canvas class="center-block" id="setbackCanvas" width="1000" height="500"></canvas>
+            <p [hidden]="!inputForm.valid ">
+              The building can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}} <sup>2</sup> at most, 
+              on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
+              <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}
+              of the lot.
+            </p>
+          </div>
+        </div>
       <form [formGroup]="inputForm" novalidate>
-        <div class="card border-primary mb-3">
-          <div class="card-header">Input</div>
+        <div class="card card-primary">
+          <div class="card-header">Options</div>
           <div class="card-body">
             <div class="form-group">
               <h5>Units</h5>
@@ -36,18 +48,6 @@
           </div>
         </div>
       </form>
-      <div class="card card-primary">
-        <div class="card-header">Output</div>
-        <div class="card-body">
-          <canvas id="setbackCanvas" width="1000" height="500"></canvas>
-          <p [hidden]="!inputForm.valid ">
-            The building can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}} <sup>2</sup> at most, 
-            on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
-            <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}
-            of the lot.
-          </p>
-        </div>
-      </div>
     </div>
   </div>
 </div>

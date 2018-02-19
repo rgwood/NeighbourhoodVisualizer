@@ -10,8 +10,7 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 export class AppComponent {
   title = 'app';
   inputForm: FormGroup;
-  canvasWidth: number = 1000;
-  canvasHeight: number = 500;
+  canvas: HTMLCanvasElement;
   bldgArea: number;
 
   constructor(private fb: FormBuilder) { // <--- inject FormBuilder
@@ -30,6 +29,7 @@ export class AppComponent {
   ngOnInit(): void {
     console.log("in OnInit()");
 
+    this.canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
     this.inputForm.valueChanges.subscribe(val => {
       console.log("valueChanged");
       console.log(this.inputForm.get('lotWidth').value);
@@ -40,41 +40,80 @@ export class AppComponent {
   }
 
   drawCanvas(): void{
+    console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
+
     let frontYardPercent= 20;
     let sideYardPercent= 10;
     let backYardPercent= 45;
 
+    const BuildingColour = "lightblue";
+
+    /*pick longer side then scale?
+    pick the longer side then have 2 different branches? simple and not that bad...
+    */
+
     let lotDepth = this.inputForm.get('lotDepth').value;
     let lotWidth = this.inputForm.get('lotWidth').value;
 
-    let canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
-    let ctx = canvas.getContext("2d");
+    //let canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
+    let ctx = this.canvas.getContext("2d");
+    ctx.save();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    let lotDrawHeight = this.realUnitToCanvasUnit(lotDepth);
-    let lotDrawWidth = this.realUnitToCanvasUnit(lotWidth);
+    
+    let ctxPerspectiveCanvasHeight, ctxPerspectiveCanvasWidth;
 
+    if(lotWidth > lotDepth){ //front yard = top of canvas
+      ctxPerspectiveCanvasHeight = this.canvas.height
+      ctxPerspectiveCanvasWidth = this.canvas.width
+    }
+    else //front yard = left of canvas
+    {
+      //we want to rotate then 
+
+      //move context to bottom left and rotate
+      ctx.translate(0, this.canvas.height);
+      //rotate 90 degrees counter-clockwise
+      ctx.rotate(AppComponent.degreesToRadians(-90));
+
+      //change size
+      ctxPerspectiveCanvasHeight = this.canvas.width;
+      ctxPerspectiveCanvasWidth = this.canvas.height
+    }
+
+
+
+    let lotDrawHeight = this.realUnitToCanvasUnit(lotDepth, ctxPerspectiveCanvasHeight);
+    let lotDrawWidth = this.realUnitToCanvasUnit(lotWidth, ctxPerspectiveCanvasHeight);
+
+    let centrePoint = (width: number) => { return width/2; };
+
+
+    let xOffsetToDrawRectInCentre = centrePoint(ctxPerspectiveCanvasWidth) - centrePoint(lotDrawWidth);
+    ctx.translate(xOffsetToDrawRectInCentre, 0);
     ctx.strokeRect(0,0,lotDrawWidth,lotDrawHeight);
 
     let bldgHeight = lotDepth * (100 - frontYardPercent - backYardPercent) / 100;
-    let bldgDrawHeight = this.realUnitToCanvasUnit(bldgHeight);
+    let bldgDrawHeight = this.realUnitToCanvasUnit(bldgHeight, ctxPerspectiveCanvasHeight);
 
     let bldgWidth = lotWidth * (100 - 2*sideYardPercent) / 100;
-    let bldgDrawWidth = this.realUnitToCanvasUnit(bldgWidth);
+    let bldgDrawWidth = this.realUnitToCanvasUnit(bldgWidth, ctxPerspectiveCanvasHeight);
 
-    ctx.fillStyle = "lightblue";
+    ctx.fillStyle = BuildingColour;
 
     let frontYardDepth = lotDepth * frontYardPercent / 100;
     let sideyardDepth = lotWidth * sideYardPercent / 100;
 
-    ctx.fillRect(this.realUnitToCanvasUnit(sideyardDepth),
-                 this.realUnitToCanvasUnit(frontYardDepth),
+    ctx.fillRect(this.realUnitToCanvasUnit(sideyardDepth, ctxPerspectiveCanvasHeight),
+                 this.realUnitToCanvasUnit(frontYardDepth, ctxPerspectiveCanvasHeight),
                  bldgDrawWidth,
                  bldgDrawHeight);
     this.bldgArea = bldgHeight * bldgWidth;
 
-    
+    //clean up
+    ctx.restore();
+
 
     /*
     CONTEXT ROTATING SNIPPET
@@ -88,8 +127,12 @@ export class AppComponent {
     */
   }
 
-  realUnitToCanvasUnit(xCoordInRealUnits:number): number{
-    return xCoordInRealUnits / this.inputForm.get('lotDepth').value * this.canvasHeight;
+  realUnitToCanvasUnit(xCoordInRealUnits:number, currContextCanvasHeight: number): number{
+    return xCoordInRealUnits / this.inputForm.get('lotDepth').value * currContextCanvasHeight;
+  }
+
+  static degreesToRadians(degrees:number){
+    return degrees * Math.PI / 180;
   }
 
 }

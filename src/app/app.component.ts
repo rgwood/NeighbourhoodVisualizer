@@ -73,6 +73,19 @@ export class AppComponent {
                  bldgDrawWidth,
                  bldgDrawHeight);
     this.bldgArea = bldgHeight * bldgWidth;
+
+    
+
+    /*
+    CONTEXT ROTATING SNIPPET
+    context.save();
+ context.translate(newx, newy);
+ context.rotate(-Math.PI/2);
+ context.textAlign = "center";
+ context.fillText("Your Label Here", labelXposition, 0);
+ context.restore();
+
+    */
   }
 
   realUnitToCanvasUnit(xCoordInRealUnits:number): number{

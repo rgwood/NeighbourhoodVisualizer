@@ -13,22 +13,23 @@
           <div class="card-header">Input</div>
           <div class="card-body">
             <div class="form-group">
-              <div>Units</div>
+              <h5>Units</h5>
+              <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
+                  <label class="form-check-label" for="ftUnit">Square feet</label>
+                </div>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" value='m' formControlName="units" id="mUnit">
                 <label class="form-check-label" for="mUnit">Square metres</label>
               </div>
-              <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
-                <label class="form-check-label" for="ftUnit">Square feet</label>
-              </div>
             </div>
             <div class="form-group">
-              <label class="center-block">Width:
+                <h5>Lot Size</h5>
+              <label >Width:
                 <!-- The ngClass is-invalid thing is to map to a Bootstrap class... there's gotta be a better way! -->
                 <input [ngClass]="{'is-invalid': inputForm.controls['lotWidth'].invalid}" class="form-control" formControlName="lotWidth">
               </label>
-              <label class="center-block">Depth:
+              <label >Depth:
                 <input [ngClass]="{'is-invalid': inputForm.controls['lotDepth'].invalid}"  class="form-control" formControlName="lotDepth">
               </label>
             </div>

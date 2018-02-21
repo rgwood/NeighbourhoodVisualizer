@@ -106,22 +106,28 @@ export class AppComponent {
     ctx.fillStyle = YardColour;
     ctx.fillRect(1,1,lotDrawWidth-2,lotDrawDepth-2);
 
-    let bldgDrawDepth = calculateBldgDepth(lotDrawDepth);
-    let bldgDrawWidth = calculateBldgWidth(lotDrawWidth);
-
-    let frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
-    let sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
-    
-    ctx.fillStyle = BuildingColour;
-    ctx.fillRect(sideyardDrawDepth,
-                 frontYardDrawDepth,
-                 bldgDrawWidth,
-                 bldgDrawDepth);
+    if( frontYardPercent + backYardPercent <100 && sideYardPercent < 50){
+      let bldgDrawDepth = calculateBldgDepth(lotDrawDepth);
+      let bldgDrawWidth = calculateBldgWidth(lotDrawWidth);
+  
+      let frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
+      let sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
+      
+      ctx.fillStyle = BuildingColour;
+      ctx.fillRect(sideyardDrawDepth,
+                   frontYardDrawDepth,
+                   bldgDrawWidth,
+                   bldgDrawDepth);
+      this.bldgArea = calculateBldgDepth(lotDepth) * calculateBldgWidth(lotWidth);
+    }
+    else{
+      this.bldgArea = 0;
+    }
 
     //clean up
     ctx.restore();
 
-    this.bldgArea = calculateBldgDepth(lotDepth) * calculateBldgWidth(lotWidth);
+    
 
     /*
     CONTEXT ROTATING SNIPPET

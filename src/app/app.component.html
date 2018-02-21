@@ -23,7 +23,7 @@
         <div class="card-body">
           <canvas class="center-block" id="setbackCanvas" width="1000" height="400"></canvas>
           <p [hidden]="!inputForm.valid ">
-            The building can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}}
+            The <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}}
             <sup>2</sup> at most, on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
             <sup>2</sup> lot. This works out to <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
             of the lot.
@@ -34,6 +34,15 @@
         <div class="card card-primary">
           <div class="card-header">Options</div>
           <div class="card-body">
+              <div class="form-group">
+                  <h5>Setback Requirements</h5>
+                  <label for="frontYard">Front yard: at least <strong>{{ inputForm.value.frontYardPercent }}%</strong> of lot depth</label>
+                  <input id="frontYard" type="range" min="0" max="100" class="slider form-control" formControlName="frontYardPercent">
+                  <label for="frontYard">Side yard: at least <strong>{{ inputForm.value.sideYardPercent }}%</strong> of lot width</label>
+                  <input id="sideYard" type="range" min="0" max="100" class="slider form-control" formControlName="sideYardPercent">
+                  <label for="frontYard">Back yard: at least <strong>{{ inputForm.value.frontYardPercent }}%</strong> of lot depth</label>
+                  <input id="backYard" type="range" min="0" max="100" class="slider form-control" formControlName="backYardPercent">
+              </div>
             <div class="form-group">
               <h5>Lot Size</h5>
               <div class="form-check form-check-inline">
@@ -52,15 +61,6 @@
               <label>Depth:
                 <input [ngClass]="{'is-invalid': inputForm.controls['lotDepth'].invalid}" class="form-control" formControlName="lotDepth">
               </label>
-            </div>
-            <div class="form-group">
-                <h5>Setback Requirements</h5>
-                <label for="frontYard">Front yard: at least <strong>{{ inputForm.value.frontYardPercent }}%</strong> of lot depth</label>
-                <input id="frontYard" type="range" min="0" max="100" class="slider form-control" formControlName="frontYardPercent">
-                <label for="frontYard">Side yard: at least <strong>{{ inputForm.value.sideYardPercent }}%</strong> of lot width</label>
-                <input id="sideYard" type="range" min="0" max="100" class="slider form-control" formControlName="sideYardPercent">
-                <label for="frontYard">Back yard: at least <strong>{{ inputForm.value.frontYardPercent }}%</strong> of lot depth</label>
-                <input id="backYard" type="range" min="0" max="100" class="slider form-control" formControlName="backYardPercent">
             </div>
           </div>
         </div>

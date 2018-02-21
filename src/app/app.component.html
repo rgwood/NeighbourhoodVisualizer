@@ -2,22 +2,31 @@
   <div class='row'>
     <div class='col-xs-12 col-md-8'>
       <h1>Setback Visualizer</h1>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam iaculis egestas porttitor. Suspendisse potenti. Maecenas
-      et ultrices metus, sed placerat arcu. Integer ligula dolor, commodo a sapien vel, pellentesque dignissim tellus. Suspendisse
-      lobortis, quam semper consequat dictum, sem lorem congue mi, quis iaculis justo ipsum non diam. Nulla facilisi. Duis
-      consectetur mi diam, a malesuada diam porta facilisis.
+      <p>
+        Urban planners use a lot of policy tools to shape our built environment, and one of the big ones is
+        <a href='https://en.wikipedia.org/wiki/Setback_(land_use)'>setback requirements</a>. In a nutshell, this means 
+        requiring that buildings be <em>set back</em> from the property lines to provide space for yards 
+        or other uses. This tool is intended to help visualize those requirements.
+      </p>
+      <p>
+        By default, this shows the setback requirements from Vancouver's <a href='http://bylaws.vancouver.ca/zoning/RS-1.pdf'>
+        RS-1 "One-Family Dwelling" zone</a>. This zone <a href='http://vancouver.ca/files/cov/Zoning-Map-Vancouver.pdf'>covers most
+        of the residential land in Vancouver</a>. There are some <a href='http://bylaws.vancouver.ca/zoning/RS-1.pdf'>minor exceptions</a>, 
+        but generally RS-1 lots require a front yard that is 20% of the lot depth, side yards that are 10% of the lot width, and a back 
+        yard that is 45% (!) of the lot depth. After all that, there is not a huge amount of land left to build on.
+      </p>
       <div class="card border-primary mb-3">
-          <div class="card-header">Results</div>
-          <div class="card-body">
-            <canvas class="center-block" id="setbackCanvas" width="1000" height="500"></canvas>
-            <p [hidden]="!inputForm.valid ">
-              The building can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}} <sup>2</sup> at most, 
-              on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
-              <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}
-              of the lot.
-            </p>
-          </div>
+        <div class="card-header">Results</div>
+        <div class="card-body">
+          <canvas class="center-block" id="setbackCanvas" width="1000" height="500"></canvas>
+          <p [hidden]="!inputForm.valid ">
+            The building can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}}
+            <sup>2</sup> at most, on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
+            <sup>2</sup> lot. This works out to {{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}
+            of the lot.
+          </p>
         </div>
+      </div>
       <form [formGroup]="inputForm" novalidate>
         <div class="card card-primary">
           <div class="card-header">Options</div>
@@ -25,23 +34,28 @@
             <div class="form-group">
               <h5>Units</h5>
               <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
-                  <label class="form-check-label" for="ftUnit">Square feet</label>
-                </div>
+                <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
+                <label class="form-check-label" for="ftUnit">Square feet</label>
+              </div>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" value='m' formControlName="units" id="mUnit">
                 <label class="form-check-label" for="mUnit">Square metres</label>
               </div>
             </div>
             <div class="form-group">
-                <h5>Lot Size</h5>
-              <label >Width:
+              <h5>Lot Size</h5>
+              <label>Width:
                 <!-- The ngClass is-invalid thing is to map to a Bootstrap class... there's gotta be a better way! -->
                 <input [ngClass]="{'is-invalid': inputForm.controls['lotWidth'].invalid}" class="form-control" formControlName="lotWidth">
               </label>
-              <label >Depth:
-                <input [ngClass]="{'is-invalid': inputForm.controls['lotDepth'].invalid}"  class="form-control" formControlName="lotDepth">
+              <label>Depth:
+                <input [ngClass]="{'is-invalid': inputForm.controls['lotDepth'].invalid}" class="form-control" formControlName="lotDepth">
               </label>
+            </div>
+            <div class="form-group">
+                <input type="range" min="0" max="100" class="slider form-control" formControlName="frontYardPercent">
+                <input type="range" min="0" max="100" class="slider form-control" formControlName="sideYardPercent">
+                <input type="range" min="0" max="100" class="slider form-control" formControlName="backYardPercent">
             </div>
           </div>
         </div>

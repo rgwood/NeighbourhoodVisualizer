@@ -22,7 +22,10 @@ export class AppComponent {
     this.inputForm = this.fb.group({
       units: 'ft',
       lotWidth: [33,[Validators.required, Validators.pattern("[0-9]+[.]?[0-9]*$")]], // <--- the FormControl called "lotWidth"
-      lotDepth: [122, [Validators.required, Validators.pattern("[0-9]+[.]?[0-9]*$")]]
+      lotDepth: [122, [Validators.required, Validators.pattern("[0-9]+[.]?[0-9]*$")]],
+      frontYardPercent:20,
+      sideYardPercent: 10,
+      backYardPercent: 45
     });
   }
 
@@ -42,9 +45,9 @@ export class AppComponent {
   drawCanvas(): void{
     console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
 
-    let frontYardPercent= 20;
-    let sideYardPercent= 10;
-    let backYardPercent= 45;
+    let frontYardPercent= this.inputForm.get('frontYardPercent').value;
+    let sideYardPercent= this.inputForm.get('sideYardPercent').value;;
+    let backYardPercent= this.inputForm.get('backYardPercent').value;;
 
     const BuildingColour = "lightblue";
 

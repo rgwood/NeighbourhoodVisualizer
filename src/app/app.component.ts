@@ -34,9 +34,9 @@ export class AppComponent {
 
     this.canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
     this.inputForm.valueChanges.subscribe(val => {
-      console.log("valueChanged");
-      console.log(this.inputForm.get('lotWidth').value);
-      this.drawCanvas();
+      if(this.inputForm.valid){
+        this.drawCanvas();
+      }
     });
 
     this.drawCanvas();
@@ -49,14 +49,15 @@ export class AppComponent {
     let sideYardPercent= this.inputForm.get('sideYardPercent').value;;
     let backYardPercent= this.inputForm.get('backYardPercent').value;;
 
-    const BuildingColour = "lightblue";
+    const BuildingColour = "rgb(0, 82, 110)";
+    const YardColour = "rgba(0, 0, 0, 0.03)";
 
     /*pick longer side then scale?
     pick the longer side then have 2 different branches? simple and not that bad...
     */
 
-    let lotDepth = this.inputForm.get('lotDepth').value;
-    let lotWidth = this.inputForm.get('lotWidth').value;
+    let lotDepth : number = this.inputForm.get('lotDepth').value;
+    let lotWidth : number = this.inputForm.get('lotWidth').value;
 
     //let canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
     let ctx = this.canvas.getContext("2d");
@@ -64,7 +65,6 @@ export class AppComponent {
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    
     let ctxPerspectiveCanvasHeight, ctxPerspectiveCanvasWidth;
 
     if(lotWidth > lotDepth){ //front yard = top of canvas
@@ -85,38 +85,43 @@ export class AppComponent {
       ctxPerspectiveCanvasWidth = this.canvas.height
     }
 
-
-
-    let lotDrawHeight = this.realUnitToCanvasUnit(lotDepth, ctxPerspectiveCanvasHeight);
+    let lotDrawDepth = this.realUnitToCanvasUnit(lotDepth, ctxPerspectiveCanvasHeight);
     let lotDrawWidth = this.realUnitToCanvasUnit(lotWidth, ctxPerspectiveCanvasHeight);
 
-    let centrePoint = (width: number) => { return width/2; };
+    if(lotDrawWidth > ctxPerspectiveCanvasWidth){
+      let scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
+      lotDrawDepth *= scalingFactor;
+      lotDrawWidth *= scalingFactor;
+    }
 
+    let centrePoint = (width: number) => { return width/2; };
+    let calculateBldgDepth = (lotDepth: number) => { return lotDepth * (100 - frontYardPercent - backYardPercent) / 100; };
+    let calculateBldgWidth = (lotWidth: number) => { return lotWidth * (100 - 2*sideYardPercent) / 100; };
 
     let xOffsetToDrawRectInCentre = centrePoint(ctxPerspectiveCanvasWidth) - centrePoint(lotDrawWidth);
     ctx.translate(xOffsetToDrawRectInCentre, 0);
-    ctx.strokeRect(0,0,lotDrawWidth,lotDrawHeight);
+    
+    ctx.strokeRect(0,0,lotDrawWidth,lotDrawDepth);
 
-    let bldgHeight = lotDepth * (100 - frontYardPercent - backYardPercent) / 100;
-    let bldgDrawHeight = this.realUnitToCanvasUnit(bldgHeight, ctxPerspectiveCanvasHeight);
+    ctx.fillStyle = YardColour;
+    ctx.fillRect(1,1,lotDrawWidth-2,lotDrawDepth-2);
 
-    let bldgWidth = lotWidth * (100 - 2*sideYardPercent) / 100;
-    let bldgDrawWidth = this.realUnitToCanvasUnit(bldgWidth, ctxPerspectiveCanvasHeight);
+    let bldgDrawDepth = calculateBldgDepth(lotDrawDepth);
+    let bldgDrawWidth = calculateBldgWidth(lotDrawWidth);
 
+    let frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
+    let sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
+    
     ctx.fillStyle = BuildingColour;
-
-    let frontYardDepth = lotDepth * frontYardPercent / 100;
-    let sideyardDepth = lotWidth * sideYardPercent / 100;
-
-    ctx.fillRect(this.realUnitToCanvasUnit(sideyardDepth, ctxPerspectiveCanvasHeight),
-                 this.realUnitToCanvasUnit(frontYardDepth, ctxPerspectiveCanvasHeight),
+    ctx.fillRect(sideyardDrawDepth,
+                 frontYardDrawDepth,
                  bldgDrawWidth,
-                 bldgDrawHeight);
-    this.bldgArea = bldgHeight * bldgWidth;
+                 bldgDrawDepth);
 
     //clean up
     ctx.restore();
 
+    this.bldgArea = calculateBldgDepth(lotDepth) * calculateBldgWidth(lotWidth);
 
     /*
     CONTEXT ROTATING SNIPPET
@@ -130,8 +135,13 @@ export class AppComponent {
     */
   }
 
+  
   realUnitToCanvasUnit(xCoordInRealUnits:number, currContextCanvasHeight: number): number{
     return xCoordInRealUnits / this.inputForm.get('lotDepth').value * currContextCanvasHeight;
+  }
+
+  toCanvasUnits(numRealUnits:number, maxRealUnits: number, currContextCanvasHeight: number): number{
+    return numRealUnits / maxRealUnits * currContextCanvasHeight;
   }
 
   static degreesToRadians(degrees:number){

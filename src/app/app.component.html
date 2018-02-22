@@ -1,27 +1,14 @@
 <div class='container'>
   <div class='row'>
     <div class='col-xs-12 col-md-8'>
-      <h1>Setback Visualizer</h1>
+      <h1>Neighbourhood Visualizer</h1>
       <p>
-        Urban planners use a lot of policy tools to shape our built environment, and one of the big ones is
-        <a href='https://en.wikipedia.org/wiki/Setback_(land_use)'>setback requirements</a>. In a nutshell, this means 
-        requiring that buildings be <em>set back</em> from the property lines to provide space for yards 
-        or other uses. This website is intended to help visualize those requirements.
+        Blah blah blah blah. Lorem ipsum!
       </p>
-      <p>
-        By default, this shows the setback requirements from Vancouver's <a href='http://bylaws.vancouver.ca/zoning/RS-1.pdf'>
-        RS-1 "One-Family Dwelling" zone</a>, on 
-        <a href='https://www.theglobeandmail.com/real-estate/vancouver/long-time-homeowners-not-immune-to-new-housingmeasures/article33292127/'>
-          a typical-sized lot</a>. This zone <a href='http://vancouver.ca/files/cov/Zoning-Map-Vancouver.pdf'>covers most
-        of the residential land in Vancouver</a>. There are some <a href='http://bylaws.vancouver.ca/zoning/RS-1.pdf'>minor exceptions</a>, 
-        but generally RS-1 lots require a front yard that is 20% of the lot depth, side yards that are 10% of the lot width, and a back 
-        yard that is 45% (!) of the lot depth. After all that, there is not a ton of land left to build on.
-      </p>
-      <p>This is an interactive tool - try adjusting the lot size and setback requirements below!</p>
       <div class="card border-primary mb-3">
         <div class="card-header">Results</div>
         <div class="card-body">
-          <canvas class="center-block" id="setbackCanvas" width="1000" height="400"></canvas>
+          <canvas class="center-block" id="setbackCanvas" width="1000" height="800"></canvas>
           <p [hidden]="!inputForm.valid ">
             The <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}}
             <sup>2</sup> at most, on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}

@@ -1,6 +1,10 @@
 import { Component, OnInit} from '@angular/core';
 import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
 
+const BuildingColour = 'rgb(0, 82, 110)';
+const YardColour = 'rgba(0, 0, 0, 0.03)';
+const MetresPerFoot = 0.3048;
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -53,12 +57,17 @@ export class AppComponent implements OnInit {
     let sideYardPercent = this.inputForm.get('sideYardPercent').value;
     let backYardPercent = this.inputForm.get('backYardPercent').value;
 
-    const BuildingColour = 'rgb(0, 82, 110)';
-    const YardColour = 'rgba(0, 0, 0, 0.03)';
-
-
     let lotDepth: number = this.inputForm.get('lotDepth').value;
     let lotWidth: number = this.inputForm.get('lotWidth').value;
+
+    if ( frontYardPercent + backYardPercent < 100 && sideYardPercent < 50) {
+      this.bldgArea = this.calculateBldgDepth(lotDepth) * this.calculateBldgWidth(lotWidth);
+    } else {
+      this.bldgArea = 0;
+    }
+
+    let lotDepthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotDepth * MetresPerFoot : lotDepth;
+    let lotWidthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotWidth * MetresPerFoot : lotWidth ;
 
     // let canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
     const ctx = this.canvas.getContext('2d');
@@ -71,12 +80,12 @@ export class AppComponent implements OnInit {
     ctxPerspectiveCanvasHeight = this.canvas.height;
     ctxPerspectiveCanvasWidth = this.canvas.width;
 
-    let lotDrawDepth = this.realUnitToCanvasUnit(lotDepth, ctxPerspectiveCanvasHeight);
-    let lotDrawWidth = this.realUnitToCanvasUnit(lotWidth, ctxPerspectiveCanvasHeight);
+    let lotDrawDepth = this.realUnitToCanvasUnit(lotDepthInMetres, ctxPerspectiveCanvasHeight);
+    let lotDrawWidth = this.realUnitToCanvasUnit(lotWidthInMetres, ctxPerspectiveCanvasHeight);
 
     // test
-    lotDrawDepth *= 0.2;
-    lotDrawWidth *= 0.2;
+    lotDrawDepth *= 0.5;
+    lotDrawWidth *= 0.5;
 
     if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
       const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
@@ -84,15 +93,36 @@ export class AppComponent implements OnInit {
       lotDrawWidth *= scalingFactor;
     }
 
-    let centrePoint = (width: number) => width / 2;
-    let calculateBldgDepth = (lotDepth: number) => {
-      return Math.max(0, lotDepth * (100 - frontYardPercent - backYardPercent) / 100);
-    };
-    let calculateBldgWidth = (lotWidth: number) => {
-      return Math.max(0, lotWidth * (100 - 2 * sideYardPercent) / 100);
-    };
+    let roadWidth = 10;
+    let lanewayWidth = 10;
 
-    this.bldgArea = calculateBldgDepth(lotDepth) * calculateBldgWidth(lotWidth);
+    // todo: choose loop limits that fill the canvas exactly
+    for (let i = 0; i < 4; i++) {
+      ctx.save();
+      let flipVertically = (i % 2 === 1);
+      for (let j = 0; j < 20; j++) {
+        this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, flipVertically);
+        ctx.translate(lotDrawWidth, 0);
+      }
+      ctx.restore();
+      ctx.translate(0, lotDrawDepth);
+    }
+
+    // clean up
+    ctx.restore();
+  }
+
+  drawBuilding(ctx: CanvasRenderingContext2D, lotDrawWidth: number, lotDrawDepth: number,
+               frontYardPercent: number, sideYardPercent: number, backYardPercent: number, flipVertically: boolean): void {
+    ctx.save();
+
+    if ( flipVertically ) {
+      let temp = frontYardPercent;
+      frontYardPercent = backYardPercent;
+      backYardPercent = temp;
+    }
+
+    let centrePoint = (width: number) => width / 2;
 
     // let xOffsetToDrawRectInCentre = centrePoint(ctxPerspectiveCanvasWidth) - centrePoint(lotDrawWidth);
     // ctx.translate(xOffsetToDrawRectInCentre, 0);
@@ -103,8 +133,8 @@ export class AppComponent implements OnInit {
     ctx.fillRect(1, 1, lotDrawWidth - 2, lotDrawDepth - 2);
 
     if ( frontYardPercent + backYardPercent < 100 && sideYardPercent < 50) {
-      const bldgDrawDepth = calculateBldgDepth(lotDrawDepth);
-      const bldgDrawWidth = calculateBldgWidth(lotDrawWidth);
+      const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth);
+      const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth);
 
       const frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
       const sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
@@ -117,23 +147,18 @@ export class AppComponent implements OnInit {
 
     }
 
-    // clean up
     ctx.restore();
-
-
-
-    /*
-    CONTEXT ROTATING SNIPPET
-    context.save();
- context.translate(newx, newy);
- context.rotate(-Math.PI/2);
- context.textAlign = "center";
- context.fillText("Your Label Here", labelXposition, 0);
- context.restore();
-
-    */
   }
 
+  calculateBldgDepth(lotDepth: number): number {
+    let frontYardPercent = this.inputForm.get('frontYardPercent').value;
+    let backYardPercent = this.inputForm.get('backYardPercent').value;
+    return Math.max(0, lotDepth * (100 - frontYardPercent - backYardPercent) / 100);
+  }
+  calculateBldgWidth(lotWidth: number): number {
+    let sideYardPercent = this.inputForm.get('sideYardPercent').value;
+    return Math.max(0, lotWidth * (100 - 2 * sideYardPercent) / 100);
+  }
 
   realUnitToCanvasUnit(xCoordInRealUnits: number, currContextCanvasHeight: number): number {
     return xCoordInRealUnits / this.inputForm.get('lotDepth').value * currContextCanvasHeight;

@@ -47,15 +47,15 @@
               <h5>Lot Size</h5>
               <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
-                  <label class="form-check-label" for="ftUnit">Square feet</label>
+                  <label class="form-check-label" for="ftUnit">Feet</label>
                 </div>
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" value='m' formControlName="units" id="mUnit">
-                  <label class="form-check-label" for="mUnit">Square metres</label>
+                  <label class="form-check-label" for="mUnit">Metres</label>
                 </div>
                 <div></div>
               <label>Width:
-                <!-- The ngClass is-invalid thing is to map to a Bootstrap class... there's gotta be a better way! -->
+                <!-- The ngClass is-invalid thing is to map to a Bootstrap CSS class... there's gotta be a better way! -->
                 <input [ngClass]="{'is-invalid': inputForm.controls['lotWidth'].invalid}" class="form-control" formControlName="lotWidth">
               </label>
               <label>Depth:

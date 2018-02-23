@@ -6,7 +6,6 @@ const YardColour = 'rgb(240, 240, 240)';
 const RoadColour = 'rgb(84, 84, 84)';
 // const MetresPerFoot = 0.3048;
 
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',

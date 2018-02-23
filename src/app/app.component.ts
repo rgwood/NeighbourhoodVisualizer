@@ -4,12 +4,11 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 const BuildingColour = 'rgb(0, 82, 110)';
 const YardColour = 'rgb(200, 200, 200)';
 const RoadColour = 'rgb(84, 84, 84)';
-const MetresPerFoot = 0.3048;
+// const MetresPerFoot = 0.3048;
 const RoadWidthInMetres = 10;
 const LanewayWidthInMetres = 4;
 // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
 const MaxBlockLengthInMetres = 100;
-const Storeys = 1;
 
 @Component({
   selector: 'app-root',
@@ -22,6 +21,10 @@ export class AppComponent implements OnInit {
   inputForm: FormGroup;
   canvas: HTMLCanvasElement;
   bldgArea: number;
+  yardRatio: number;
+  roadRatio: number;
+  buildingRatio: number;
+  floorSpaceIn1SqKm: number;
 
   static degreesToRadians(degrees: number) {
     return degrees * Math.PI / 180;
@@ -34,12 +37,13 @@ export class AppComponent implements OnInit {
   createForm() {
     console.log('in createForm()');
     this.inputForm = this.fb.group({
-      units: 'ft',
-      lotWidth: [33, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
-      lotDepth: [122, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
+      lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
+      lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
       frontYardPercent: 20,
       sideYardPercent: 10,
       backYardPercent: 45,
+      storeys: [2, [Validators.required, Validators.min(0), Validators.max(50)]],
+      averageUnitSizeInSqM: 100
     });
   }
 
@@ -62,16 +66,11 @@ export class AppComponent implements OnInit {
     let sideYardPercent = this.inputForm.get('sideYardPercent').value;
     let backYardPercent = this.inputForm.get('backYardPercent').value;
 
-    let lotDepth: number = this.inputForm.get('lotDepth').value;
-    let lotWidth: number = this.inputForm.get('lotWidth').value;
+    let lotDepthInM: number = this.inputForm.get('lotDepth').value;
+    let lotWidthInM: number = this.inputForm.get('lotWidth').value;
 
-    // this.bldgArea = this.calculateBldgDepth(lotDepth) * this.calculateBldgWidth(lotWidth);
-
-    let lotDepthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotDepth * MetresPerFoot : lotDepth;
-    let lotWidthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotWidth * MetresPerFoot : lotWidth ;
-
-    this.calculateStatistics(lotDepthInMetres, lotWidthInMetres, frontYardPercent, sideYardPercent, backYardPercent);
-    this.drawCanvas(lotDepthInMetres, lotWidthInMetres, frontYardPercent, sideYardPercent, backYardPercent);
+    this.calculateStatistics(lotDepthInM, lotWidthInM, frontYardPercent, sideYardPercent, backYardPercent);
+    this.drawCanvas(lotDepthInM, lotWidthInM, frontYardPercent, sideYardPercent, backYardPercent);
   }
 
   calculateStatistics(lotDepthInM: number, lotWidthInM: number,
@@ -92,11 +91,11 @@ export class AppComponent implements OnInit {
     let maxNumOfAdjacentLots = Math.floor(MaxBlockLengthInMetres / lotWidthInM);
     blockWidthInM += maxNumOfAdjacentLots * lotWidthInM;
 
-    const blockAreaInSqM = blockDepthInM * blockWidthInM;
+    const totalBlockAreaInSqM = blockDepthInM * blockWidthInM;
     const blockAreaRoadsOnlyInSqM = (blockDepthInM * RoadWidthInMetres) +
                                     (maxNumOfAdjacentLots * lotWidthInM * RoadWidthInMetres) +
                                     (maxNumOfAdjacentLots * lotWidthInM * LanewayWidthInMetres);
-    const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row od houses on each side of the laneway
+    const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row of houses on each side of the laneway
 
     const blockAreaPrivateLandOnlyInSqM = lotsInBlock * lotDepthInM * lotWidthInM;
 
@@ -104,6 +103,12 @@ export class AppComponent implements OnInit {
     const bldgWidthInM = this.calculateBldgWidth(lotWidthInM, sideYardPercent);
     const bldgLandArea = bldgDepthInM * bldgWidthInM;
     const blockAreaLandWithBuildingsOnItInSqM = lotsInBlock * bldgLandArea;
+    const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
+
+    this.bldgArea = bldgLandArea;
+    this.yardRatio = blockAreaYardsOnlyInSqM / totalBlockAreaInSqM;
+    this.roadRatio = blockAreaRoadsOnlyInSqM / totalBlockAreaInSqM;
+    this.buildingRatio = blockAreaLandWithBuildingsOnItInSqM / totalBlockAreaInSqM;
 
     // console.log(`total block area: ${blockAreaInSqM}m^2`);
     // console.log(`total road area: ${blockAreaRoadsOnlyInSqM}m^2`);
@@ -134,14 +139,13 @@ export class AppComponent implements OnInit {
     let lanewayDrawWidth = this.realUnitToCanvasUnit(LanewayWidthInMetres, ctxPerspectiveCanvasHeight);
     let maxBlockDrawLength = this.realUnitToCanvasUnit(MaxBlockLengthInMetres, ctxPerspectiveCanvasHeight);
 
-    // test
-    let testScalingFactor = 0.3;
+    // todo: some kinda dynamic scaling to ensure that we always show a certain number of blocks
+    let testScalingFactor = 0.1;
     lotDrawDepth *= testScalingFactor;
     lotDrawWidth *= testScalingFactor;
     roadDrawWidth *= testScalingFactor;
     lanewayDrawWidth *= testScalingFactor;
     maxBlockDrawLength *= testScalingFactor;
-
 
     if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
       const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
@@ -159,7 +163,8 @@ export class AppComponent implements OnInit {
     let expectedInnerLoopIterations = blocksThatFitVerticallyInCanvas *  buildingsThatFitHorizontallyInCanvas;
     if (expectedInnerLoopIterations > MaxInnerLoopIterations ) {
       // todo: how do I throw a regular exception?
-      throw new DOMException(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`);
+      // `Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`
+      throw new DOMException();
     }
 
     for (let i = 0; i < blocksThatFitVerticallyInCanvas * 2; i++) {

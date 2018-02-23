@@ -10,10 +10,20 @@
         <div class="card-body">
           <canvas class="center-block" id="setbackCanvas" width="1000" height="800"></canvas>
           <p [hidden]="!inputForm.valid ">
-            The <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}} {{inputForm.value.units}}
-            <sup>2</sup> at most, on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} {{inputForm.value.units}}
-            <sup>2</sup> lot. This works out to <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
+            The land in a neighbourhood like this is covered by {{yardRatio | percent}} "yards", {{roadRatio | percent}} roads, 
+            and {{buildingRatio | percent}} buildings.
+            One square kilometre of blocks like this would allow {{floorSpaceIn1SqKm | number:'1.0-0'}} m<sup>2</sup> of floor space, or approximately Y dwelling units assuming
+            an average size of {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m<sup>2</sup>.
+            The FSR on a given lot is X, but the net FSR of the entire neighbourhood (including streets) is Y.
+          </p>
+          <p [hidden]="!inputForm.valid ">
+            The <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}}
+            m<sup>2</sup> at most on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}}
+            m<sup>2</sup> lot. This works out to <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
             of the lot.
+            With {{ inputForm.value.storeys }}-storey buildings, we can have {{bldgArea * inputForm.value.storeys | number:'1.0-0'}} m<sup>2</sup> 
+            of living space per lot. This works out to 
+            {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) | number:'1.0-2'}} FSR/FAR.
           </p>
         </div>
       </div>
@@ -31,16 +41,7 @@
                   <input id="backYard" type="range" min="0" max="100" class="slider form-control" formControlName="backYardPercent">
               </div>
             <div class="form-group">
-              <h5>Lot Size</h5>
-              <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" value='ft' formControlName="units" id="ftUnit">
-                  <label class="form-check-label" for="ftUnit">Feet</label>
-                </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" value='m' formControlName="units" id="mUnit">
-                  <label class="form-check-label" for="mUnit">Metres</label>
-                </div>
-                <div></div>
+              <h5>Lot Size (in metres)</h5>
               <label>Width:
                 <!-- The ngClass is-invalid thing is to map to a Bootstrap CSS class... there's gotta be a better way! -->
                 <input [ngClass]="{'is-invalid': inputForm.controls['lotWidth'].invalid}" class="form-control" formControlName="lotWidth">

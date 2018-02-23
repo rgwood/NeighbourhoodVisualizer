@@ -1,11 +1,15 @@
 <div class='container'>
   <div class='row'>
+      <div class='col-xs-12 col-md-12 col-lg-6'>
+          <h1>Neighbourhood Visualizer</h1>
+          <p>
+              A tool to quickly estimate the effects of land use regulations and road width.
+              <a href='https://github.com/rgwood/SetbackTool'>Source code available</a>.
+            </p>
+      </div>
+  </div>
+  <div class='row'>
     <div class='col-xs-12 col-md-12 col-lg-6'>
-      <h1>Neighbourhood Visualizer</h1>
-      <p>
-        A tool to quickly estimate the effects of land use regulations and road width.
-        <a href='https://github.com/rgwood/SetbackTool'>Source code available</a>.
-      </p>
       <div class="card border-primary mb-3">
         <div class="card-header">Results</div>
         <div class="card-body">
@@ -17,9 +21,9 @@
             <sup>2</sup>
             of floor space, or approximately {{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} dwelling units
             assuming an average unit size of {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m
-            <sup>2</sup>. The max FSR on a given lot is {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth)
-            | number:'1.0-2'}}, but the max
-            <em>net</em> FSR of the entire neighbourhood (including streets) is {{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}.
+            <sup>2</sup> (note: this assumes no explicit caps on the number of units in a building). The max FSR on a given lot is effectively 
+            {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) | number:'1.0-2'}}, but the max
+            <em>net</em> (including streets) FSR of the entire neighbourhood is {{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}.
           </p>
           <p [hidden]="!inputForm.valid ">
             The

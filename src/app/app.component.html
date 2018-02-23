@@ -10,20 +10,27 @@
         <div class="card-body">
           <canvas class="center-block" id="setbackCanvas" width="1000" height="800"></canvas>
           <p [hidden]="!inputForm.valid ">
-            The land in a neighbourhood like this is covered by {{yardRatio | percent}} "yards", {{roadRatio | percent}} roads, 
-            and {{buildingRatio | percent}} buildings.
-            One square kilometre of blocks like this would allow {{floorSpaceIn1SqKm | number:'1.0-0'}} m<sup>2</sup> of floor space, or approximately Y dwelling units assuming
-            an average size of {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m<sup>2</sup>.
-            The FSR on a given lot is X, but the net FSR of the entire neighbourhood (including streets) is Y.
+            The land in a neighbourhood like this is covered by {{yardRatio | percent}} "yards", {{roadRatio | percent}} roads, and {{buildingRatio
+            | percent}} buildings. One square kilometre of blocks like this would allow {{floorSpaceIn1SqKm | number:'1.0-0'}}
+            m
+            <sup>2</sup>
+            of floor space, or approximately {{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} dwelling units
+            assuming an average unit size of {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m
+            <sup>2</sup>. The max FSR on a given lot is {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth)
+            | number:'1.0-2'}}, but the max
+            <em>net</em> FSR of the entire neighbourhood (including streets) is {{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}.
           </p>
           <p [hidden]="!inputForm.valid ">
-            The <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}}
-            m<sup>2</sup> at most on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}}
-            m<sup>2</sup> lot. This works out to <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
-            of the lot.
-            With {{ inputForm.value.storeys }}-storey buildings, we can have {{bldgArea * inputForm.value.storeys | number:'1.0-0'}} m<sup>2</sup> 
-            of living space per lot. This works out to 
-            {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) | number:'1.0-2'}} FSR/FAR.
+            The
+            <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}} m
+            <sup>2</sup> at most on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} m
+            <sup>2</sup> lot. This works out to
+            <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
+            of the lot. With {{ inputForm.value.storeys }}-storey buildings, we can have {{bldgArea * inputForm.value.storeys | number:'1.0-0'}}
+            m
+            <sup>2</sup>
+            of living space per lot. This works out to {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth)
+            | number:'1.0-2'}} FSR/FAR.
           </p>
         </div>
       </div>
@@ -31,15 +38,40 @@
         <div class="card card-primary">
           <div class="card-header">Options</div>
           <div class="card-body">
-              <div class="form-group">
-                  <h5>Setback Requirements</h5>
-                  <label for="frontYard">Front yard: at least <strong>{{ inputForm.value.frontYardPercent }}%</strong> of lot depth</label>
-                  <input id="frontYard" type="range" min="0" max="100" class="slider form-control" formControlName="frontYardPercent">
-                  <label for="sideYard">Side yard: at least <strong>{{ inputForm.value.sideYardPercent }}%</strong> of lot width</label>
-                  <input id="sideYard" type="range" min="0" max="100" class="slider form-control" formControlName="sideYardPercent">
-                  <label for="backYard">Back yard: at least <strong>{{ inputForm.value.backYardPercent }}%</strong> of lot depth</label>
-                  <input id="backYard" type="range" min="0" max="100" class="slider form-control" formControlName="backYardPercent">
+            <div class="form-group">
+              <h5>Setback Requirements</h5>
+              <label for="frontYard">Front yard: at least
+                <strong>{{ inputForm.value.frontYardPercent }}%</strong> of lot depth</label>
+              <input id="frontYard" type="range" min="0" max="100" class="slider form-control" formControlName="frontYardPercent">
+              <label for="sideYard">Side yard: at least
+                <strong>{{ inputForm.value.sideYardPercent }}%</strong> of lot width</label>
+              <input id="sideYard" type="range" min="0" max="100" class="slider form-control" formControlName="sideYardPercent">
+              <label for="backYard">Back yard: at least
+                <strong>{{ inputForm.value.backYardPercent }}%</strong> of lot depth</label>
+              <input id="backYard" type="range" min="0" max="100" class="slider form-control" formControlName="backYardPercent">
+            </div>
+            <div class="form-group">
+              <h5>Streets</h5>
+              <label for="roadWidth">Road width:
+                <strong>{{ inputForm.value.roadWidthInM }}m</strong></label>
+              <input id="roadWidth" type="range" min="1" max="30" class="slider form-control" formControlName="roadWidthInM">            
+              <label for="lanewayWidth">Laneway width:
+                <strong>{{ inputForm.value.lanewayWidthInM }}m</strong></label>
+              <input id="lanewayWidth" type="range" min="1" max="30" class="slider form-control" formControlName="lanewayWidthInM">
+            </div>
+            <div class="form-group">
+              <h5>Blocks</h5>
+              <label for="maxBlockLength">Maximum block length:
+                <strong>{{ inputForm.value.maxBlockLengthInM }}m</strong></label>
+              <input id="maxBlockLength" type="range" min="20" max="300" class="slider form-control" formControlName="maxBlockLengthInM">
               </div>
+
+            <div class="form-group">
+              <h5>Building Height</h5>
+              <label for="storeys">
+                The average building is <strong>{{ inputForm.value.storeys }}</strong> storeys tall</label>
+              <input id="storeys" type="range" min="1" max="20" class="slider form-control" formControlName="storeys">
+            </div>
             <div class="form-group">
               <h5>Lot Size (in metres)</h5>
               <label>Width:
@@ -56,9 +88,3 @@
     </div>
   </div>
 </div>
-
-<!-- <h3>Debug info</h3>
-<p>Width value: {{ inputForm.value.lotWidth | json }}</p>
-<p>Height value: {{ inputForm.value.lotDepth | json }}</p>
-<p>All values: {{ inputForm.value | json }}</p>
-<p>Form status: {{ inputForm.status | json }}</p> -->

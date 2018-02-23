@@ -9,6 +9,7 @@ const RoadWidthInMetres = 10;
 const LanewayWidthInMetres = 4;
 // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
 const MaxBlockLengthInMetres = 100;
+const Storeys = 1;
 
 @Component({
   selector: 'app-root',
@@ -57,7 +58,6 @@ export class AppComponent implements OnInit {
 
   calculateStatsAndDrawCanvas(): void {
 
-
     let frontYardPercent = this.inputForm.get('frontYardPercent').value;
     let sideYardPercent = this.inputForm.get('sideYardPercent').value;
     let backYardPercent = this.inputForm.get('backYardPercent').value;
@@ -65,15 +65,18 @@ export class AppComponent implements OnInit {
     let lotDepth: number = this.inputForm.get('lotDepth').value;
     let lotWidth: number = this.inputForm.get('lotWidth').value;
 
-    this.bldgArea = this.calculateBldgDepth(lotDepth) * this.calculateBldgWidth(lotWidth);
+    // this.bldgArea = this.calculateBldgDepth(lotDepth) * this.calculateBldgWidth(lotWidth);
 
     let lotDepthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotDepth * MetresPerFoot : lotDepth;
     let lotWidthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotWidth * MetresPerFoot : lotWidth ;
 
+    this.calculateStatistics(lotDepthInMetres, lotWidthInMetres, frontYardPercent, sideYardPercent, backYardPercent);
     this.drawCanvas(lotDepthInMetres, lotWidthInMetres, frontYardPercent, sideYardPercent, backYardPercent);
   }
 
-  calculateStatistics(): void {
+  calculateStatistics(lotDepthInM: number, lotWidthInM: number,
+    frontYardPercent: number, sideYardPercent: number, backYardPercent: number): void {
+    console.log(`lot depth: ${lotDepthInM}m, width: ${lotWidthInM}m`);
     // over 1 km^2...
     // what % is land/road/building?
     // how much floor space total?
@@ -84,8 +87,28 @@ export class AppComponent implements OnInit {
     // I think we just calculate for a certain area then normalize that to a square kilometre
     // what's the smallest area we can do that for?
     // I think it's: road on top and left, then 2 blocks of housing with laneway in between
+    let blockWidthInM = RoadWidthInMetres, blockDepthInM = RoadWidthInMetres;
+    blockDepthInM += lotDepthInM + LanewayWidthInMetres + lotDepthInM;
+    let maxNumOfAdjacentLots = Math.floor(MaxBlockLengthInMetres / lotWidthInM);
+    blockWidthInM += maxNumOfAdjacentLots * lotWidthInM;
 
+    const blockAreaInSqM = blockDepthInM * blockWidthInM;
+    const blockAreaRoadsOnlyInSqM = (blockDepthInM * RoadWidthInMetres) +
+                                    (maxNumOfAdjacentLots * lotWidthInM * RoadWidthInMetres) +
+                                    (maxNumOfAdjacentLots * lotWidthInM * LanewayWidthInMetres);
+    const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row od houses on each side of the laneway
 
+    const blockAreaPrivateLandOnlyInSqM = lotsInBlock * lotDepthInM * lotWidthInM;
+
+    const bldgDepthInM = this.calculateBldgDepth(lotDepthInM, frontYardPercent, backYardPercent);
+    const bldgWidthInM = this.calculateBldgWidth(lotWidthInM, sideYardPercent);
+    const bldgLandArea = bldgDepthInM * bldgWidthInM;
+    const blockAreaLandWithBuildingsOnItInSqM = lotsInBlock * bldgLandArea;
+
+    // console.log(`total block area: ${blockAreaInSqM}m^2`);
+    // console.log(`total road area: ${blockAreaRoadsOnlyInSqM}m^2`);
+    // console.log(`total lot area: ${blockAreaPrivateLandOnlyInSqM}m^2`);
+    // console.log(`total land with buildings on it: ${blockAreaLandWithBuildingsOnItInSqM}m^2`);
   }
 
   drawCanvas(lotDepthInMetres: number, lotWidthInMetres: number,
@@ -133,9 +156,10 @@ export class AppComponent implements OnInit {
     let buildingsThatFitHorizontallyInCanvas = Math.ceil( ctxPerspectiveCanvasWidth / lotDrawWidth );
 
     const MaxInnerLoopIterations = 10000;
-    if (blocksThatFitVerticallyInCanvas *  buildingsThatFitHorizontallyInCanvas > MaxInnerLoopIterations ) {
+    let expectedInnerLoopIterations = blocksThatFitVerticallyInCanvas *  buildingsThatFitHorizontallyInCanvas;
+    if (expectedInnerLoopIterations > MaxInnerLoopIterations ) {
       // todo: how do I throw a regular exception?
-      throw DOMException;
+      throw new DOMException(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`);
     }
 
     for (let i = 0; i < blocksThatFitVerticallyInCanvas * 2; i++) {
@@ -172,18 +196,13 @@ export class AppComponent implements OnInit {
       backYardPercent = temp;
     }
 
-    let centrePoint = (width: number) => width / 2;
-
-    // let xOffsetToDrawRectInCentre = centrePoint(ctxPerspectiveCanvasWidth) - centrePoint(lotDrawWidth);
-    // ctx.translate(xOffsetToDrawRectInCentre, 0);
-
     ctx.strokeRect(0, 0, lotDrawWidth, lotDrawDepth);
 
     ctx.fillStyle = YardColour;
     ctx.fillRect(1, 1, lotDrawWidth - 2, lotDrawDepth - 2);
 
-    const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth);
-    const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth);
+    const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth, frontYardPercent, backYardPercent);
+    const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth, sideYardPercent);
 
     const frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
     const sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
@@ -197,13 +216,10 @@ export class AppComponent implements OnInit {
     ctx.restore();
   }
 
-  calculateBldgDepth(lotDepth: number): number {
-    let frontYardPercent = this.inputForm.get('frontYardPercent').value;
-    let backYardPercent = this.inputForm.get('backYardPercent').value;
+  calculateBldgDepth(lotDepth: number, frontYardPercent: number, backYardPercent: number): number {
     return Math.max(0, lotDepth * (100 - frontYardPercent - backYardPercent) / 100);
   }
-  calculateBldgWidth(lotWidth: number): number {
-    let sideYardPercent = this.inputForm.get('sideYardPercent').value;
+  calculateBldgWidth(lotWidth: number, sideYardPercent: number): number {
     return Math.max(0, lotWidth * (100 - 2 * sideYardPercent) / 100);
   }
 

@@ -2,8 +2,13 @@ import { Component, OnInit} from '@angular/core';
 import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
 
 const BuildingColour = 'rgb(0, 82, 110)';
-const YardColour = 'rgba(0, 0, 0, 0.03)';
+const YardColour = 'rgb(200, 200, 200)';
+const RoadColour = 'rgb(84, 84, 84)';
 const MetresPerFoot = 0.3048;
+const RoadWidthInMetres = 10;
+const LanewayWidthInMetres = 4;
+// If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
+const MaxBlockLengthInMetres = 100;
 
 @Component({
   selector: 'app-root',
@@ -33,7 +38,7 @@ export class AppComponent implements OnInit {
       lotDepth: [122, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
       frontYardPercent: 20,
       sideYardPercent: 10,
-      backYardPercent: 45
+      backYardPercent: 45,
     });
   }
 
@@ -43,15 +48,15 @@ export class AppComponent implements OnInit {
     this.canvas = document.getElementById('setbackCanvas') as HTMLCanvasElement;
     this.inputForm.valueChanges.subscribe(val => {
       if (this.inputForm.valid) {
-        this.drawCanvas();
+        this.calculateStatsAndDrawCanvas();
       }
     });
 
-    this.drawCanvas();
+    this.calculateStatsAndDrawCanvas();
   }
 
-  drawCanvas(): void {
-    console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
+  calculateStatsAndDrawCanvas(): void {
+
 
     let frontYardPercent = this.inputForm.get('frontYardPercent').value;
     let sideYardPercent = this.inputForm.get('sideYardPercent').value;
@@ -60,20 +65,40 @@ export class AppComponent implements OnInit {
     let lotDepth: number = this.inputForm.get('lotDepth').value;
     let lotWidth: number = this.inputForm.get('lotWidth').value;
 
-    if ( frontYardPercent + backYardPercent < 100 && sideYardPercent < 50) {
-      this.bldgArea = this.calculateBldgDepth(lotDepth) * this.calculateBldgWidth(lotWidth);
-    } else {
-      this.bldgArea = 0;
-    }
+    this.bldgArea = this.calculateBldgDepth(lotDepth) * this.calculateBldgWidth(lotWidth);
 
     let lotDepthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotDepth * MetresPerFoot : lotDepth;
     let lotWidthInMetres: number = (this.inputForm.get('units').value === 'ft') ? lotWidth * MetresPerFoot : lotWidth ;
 
-    // let canvas = document.getElementById("setbackCanvas") as HTMLCanvasElement;
+    this.drawCanvas(lotDepthInMetres, lotWidthInMetres, frontYardPercent, sideYardPercent, backYardPercent);
+  }
+
+  calculateStatistics(): void {
+    // over 1 km^2...
+    // what % is land/road/building?
+    // how much floor space total?
+    // what are the gross and net floor space ratios?
+    // how many dwelling units (assuming a specific size of unit?)
+
+    // Big Q: how do we calculate this for a square kilometre when blocks don't line up exactly?
+    // I think we just calculate for a certain area then normalize that to a square kilometre
+    // what's the smallest area we can do that for?
+    // I think it's: road on top and left, then 2 blocks of housing with laneway in between
+
+
+  }
+
+  drawCanvas(lotDepthInMetres: number, lotWidthInMetres: number,
+    frontYardPercent: number, sideYardPercent: number, backYardPercent: number): void {
+    console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
     const ctx = this.canvas.getContext('2d');
     ctx.save();
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // draw background
+    ctx.fillStyle = RoadColour;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
     let ctxPerspectiveCanvasHeight, ctxPerspectiveCanvasWidth;
 
@@ -82,10 +107,18 @@ export class AppComponent implements OnInit {
 
     let lotDrawDepth = this.realUnitToCanvasUnit(lotDepthInMetres, ctxPerspectiveCanvasHeight);
     let lotDrawWidth = this.realUnitToCanvasUnit(lotWidthInMetres, ctxPerspectiveCanvasHeight);
+    let roadDrawWidth = this.realUnitToCanvasUnit(RoadWidthInMetres, ctxPerspectiveCanvasHeight);
+    let lanewayDrawWidth = this.realUnitToCanvasUnit(LanewayWidthInMetres, ctxPerspectiveCanvasHeight);
+    let maxBlockDrawLength = this.realUnitToCanvasUnit(MaxBlockLengthInMetres, ctxPerspectiveCanvasHeight);
 
     // test
-    lotDrawDepth *= 0.5;
-    lotDrawWidth *= 0.5;
+    let testScalingFactor = 0.3;
+    lotDrawDepth *= testScalingFactor;
+    lotDrawWidth *= testScalingFactor;
+    roadDrawWidth *= testScalingFactor;
+    lanewayDrawWidth *= testScalingFactor;
+    maxBlockDrawLength *= testScalingFactor;
+
 
     if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
       const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
@@ -93,19 +126,36 @@ export class AppComponent implements OnInit {
       lotDrawWidth *= scalingFactor;
     }
 
-    let roadWidth = 10;
-    let lanewayWidth = 10;
+    ctx.translate(roadDrawWidth, 0 );
+    let blockDrawHeight = roadDrawWidth + lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
+    let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / blockDrawHeight);
+    // doesn't include road width but that's OK, we just need a loose upper bound
+    let buildingsThatFitHorizontallyInCanvas = Math.ceil( ctxPerspectiveCanvasWidth / lotDrawWidth );
 
-    // todo: choose loop limits that fill the canvas exactly
-    for (let i = 0; i < 4; i++) {
+    const MaxInnerLoopIterations = 10000;
+    if (blocksThatFitVerticallyInCanvas *  buildingsThatFitHorizontallyInCanvas > MaxInnerLoopIterations ) {
+      // todo: how do I throw a regular exception?
+      throw DOMException;
+    }
+
+    for (let i = 0; i < blocksThatFitVerticallyInCanvas * 2; i++) {
+      let ctxIsAtRoad = (i % 2 === 0); // is our context currently on a road (as opposed to a laneway?)
+      ctx.translate(0, (ctxIsAtRoad ? roadDrawWidth : lanewayDrawWidth) );
       ctx.save();
-      let flipVertically = (i % 2 === 1);
-      for (let j = 0; j < 20; j++) {
-        this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, flipVertically);
-        ctx.translate(lotDrawWidth, 0);
+
+      let yOffsetFromBlockStart = 0;
+      for (let j = 0; j < buildingsThatFitHorizontallyInCanvas; j++) {
+        if (yOffsetFromBlockStart + lotDrawWidth >= maxBlockDrawLength) { // start a new block
+          yOffsetFromBlockStart = 0;
+          ctx.translate(roadDrawWidth, 0);
+        } else { // draw a building!
+          this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, !ctxIsAtRoad);
+          ctx.translate(lotDrawWidth, 0);
+          yOffsetFromBlockStart += lotDrawWidth;
+        }
       }
       ctx.restore();
-      ctx.translate(0, lotDrawDepth);
+      ctx.translate(0, lotDrawDepth );
     }
 
     // clean up
@@ -132,20 +182,17 @@ export class AppComponent implements OnInit {
     ctx.fillStyle = YardColour;
     ctx.fillRect(1, 1, lotDrawWidth - 2, lotDrawDepth - 2);
 
-    if ( frontYardPercent + backYardPercent < 100 && sideYardPercent < 50) {
-      const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth);
-      const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth);
+    const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth);
+    const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth);
 
-      const frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
-      const sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
+    const frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
+    const sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
 
-      ctx.fillStyle = BuildingColour;
-      ctx.fillRect(sideyardDrawDepth,
-                   frontYardDrawDepth,
-                   bldgDrawWidth,
-                   bldgDrawDepth);
-
-    }
+    ctx.fillStyle = BuildingColour;
+    ctx.fillRect(sideyardDrawDepth,
+      frontYardDrawDepth,
+      bldgDrawWidth,
+      bldgDrawDepth);
 
     ctx.restore();
   }

@@ -150,19 +150,11 @@ export class AppComponent implements OnInit {
     ctxPerspectiveCanvasHeight = this.canvas.height;
     ctxPerspectiveCanvasWidth = this.canvas.width;
 
-    let lotDrawDepth = this.realUnitToCanvasUnit(lotDepthInM, ctxPerspectiveCanvasHeight);
-    let lotDrawWidth = this.realUnitToCanvasUnit(lotWidthInM, ctxPerspectiveCanvasHeight);
-    let roadDrawWidth = this.realUnitToCanvasUnit(roadWidthInM, ctxPerspectiveCanvasHeight);
-    let lanewayDrawWidth = this.realUnitToCanvasUnit(lanewayWidthInM, ctxPerspectiveCanvasHeight);
-    let maxBlockDrawLength = this.realUnitToCanvasUnit(maxBlockLengthInM, ctxPerspectiveCanvasHeight);
-
-    // todo: some kinda dynamic scaling to ensure that we always show a certain number of blocks
-    let testScalingFactor = 0.1;
-    lotDrawDepth *= testScalingFactor;
-    lotDrawWidth *= testScalingFactor;
-    roadDrawWidth *= testScalingFactor;
-    lanewayDrawWidth *= testScalingFactor;
-    maxBlockDrawLength *= testScalingFactor;
+    let lotDrawDepth = this.scaleRealUnitForCanvas(lotDepthInM, ctxPerspectiveCanvasHeight);
+    let lotDrawWidth = this.scaleRealUnitForCanvas(lotWidthInM, ctxPerspectiveCanvasHeight);
+    let roadDrawWidth = this.scaleRealUnitForCanvas(roadWidthInM, ctxPerspectiveCanvasHeight);
+    let lanewayDrawWidth = this.scaleRealUnitForCanvas(lanewayWidthInM, ctxPerspectiveCanvasHeight);
+    let maxBlockDrawLength = this.scaleRealUnitForCanvas(maxBlockLengthInM, ctxPerspectiveCanvasHeight);
 
     if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
       const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
@@ -215,9 +207,8 @@ export class AppComponent implements OnInit {
     ctx.save();
 
     if ( flipVertically ) {
-      let temp = frontYardPercent;
-      frontYardPercent = backYardPercent;
-      backYardPercent = temp;
+      ctx.translate(lotDrawWidth, lotDrawDepth );
+      ctx.rotate(AppComponent.degreesToRadians(180));
     }
 
     ctx.strokeRect(0, 0, lotDrawWidth, lotDrawDepth);
@@ -247,11 +238,8 @@ export class AppComponent implements OnInit {
     return Math.max(0, lotWidth * (100 - 2 * sideYardPercent) / 100);
   }
 
-  realUnitToCanvasUnit(xCoordInRealUnits: number, currContextCanvasHeight: number): number {
-    return xCoordInRealUnits / this.inputForm.get('lotDepth').value * currContextCanvasHeight;
-  }
-
-  toCanvasUnits(numRealUnits: number, maxRealUnits: number, currContextCanvasHeight: number): number {
-    return numRealUnits / maxRealUnits * currContextCanvasHeight;
+  // Scale things so the defaults look good. Someday maybe we could determine this dynamically
+  scaleRealUnitForCanvas(metres: number, currContextCanvasHeight: number): number {
+    return metres * 2.42;
   }
 }

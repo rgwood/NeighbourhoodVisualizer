@@ -1,4 +1,4 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
 
 const BuildingColour = 'rgb(0, 82, 110)';
@@ -74,9 +74,9 @@ export class AppComponent implements OnInit {
     let maxBlockLengthInM: number = this.inputForm.get('maxBlockLengthInM').value;
 
     this.calculateStatistics(lotDepthInM, lotWidthInM, frontYardPercent, sideYardPercent, backYardPercent,
-                             storeys, roadWidthInM, lanewayWidthInM, maxBlockLengthInM);
+      storeys, roadWidthInM, lanewayWidthInM, maxBlockLengthInM);
     this.drawCanvas(lotDepthInM, lotWidthInM, frontYardPercent, sideYardPercent, backYardPercent,
-                    roadWidthInM, lanewayWidthInM, maxBlockLengthInM);
+      roadWidthInM, lanewayWidthInM, maxBlockLengthInM);
   }
 
   public calculateStatistics(lotDepthInM: number, lotWidthInM: number,
@@ -108,8 +108,8 @@ export class AppComponent implements OnInit {
 
     const totalBlockAreaInSqM = blockDepthInM * blockWidthInM;
     const blockAreaRoadsOnlyInSqM = (blockDepthInM * roadWidthInM) +
-                                    (maxNumOfAdjacentLots * lotWidthInM * roadWidthInM) +
-                                    (maxNumOfAdjacentLots * lotWidthInM * lanewayWidthInM);
+      (maxNumOfAdjacentLots * lotWidthInM * roadWidthInM) +
+      (maxNumOfAdjacentLots * lotWidthInM * lanewayWidthInM);
     const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row of houses on each side of the laneway
 
     const blockAreaPrivateLandOnlyInSqM = lotsInBlock * lotDepthInM * lotWidthInM;
@@ -161,23 +161,23 @@ export class AppComponent implements OnInit {
       lotDrawWidth *= scalingFactor;
     }
 
-    ctx.translate(roadDrawWidth, 0 );
+    ctx.translate(roadDrawWidth, 0);
     let blockDrawHeight = roadDrawWidth + lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
     let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / blockDrawHeight);
-    // doesn't include road width but that's OK, we just need a loose upper bound
-    let buildingsThatFitHorizontallyInCanvas = Math.ceil( ctxPerspectiveCanvasWidth / lotDrawWidth );
+    // doesn't include road width but that's OK, we just need a loose upper bound to avoid doing tooo much work
+    let buildingsThatFitHorizontallyInCanvas = Math.ceil(ctxPerspectiveCanvasWidth / lotDrawWidth);
 
     const MaxInnerLoopIterations = 10000;
-    let expectedInnerLoopIterations = blocksThatFitVerticallyInCanvas *  buildingsThatFitHorizontallyInCanvas;
-    if (expectedInnerLoopIterations > MaxInnerLoopIterations ) {
+    let expectedInnerLoopIterations = blocksThatFitVerticallyInCanvas * buildingsThatFitHorizontallyInCanvas;
+    if (expectedInnerLoopIterations > MaxInnerLoopIterations) {
       // todo: how do I throw a regular exception?
-      // `Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`
+      // i.e. new Exception(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`)
       throw new DOMException();
     }
 
     for (let i = 0; i < blocksThatFitVerticallyInCanvas * 2; i++) {
       let ctxIsAtRoad = (i % 2 === 0); // is our context currently on a road (as opposed to a laneway?)
-      ctx.translate(0, (ctxIsAtRoad ? roadDrawWidth : lanewayDrawWidth) );
+      ctx.translate(0, (ctxIsAtRoad ? roadDrawWidth : lanewayDrawWidth));
       ctx.save();
 
       let yOffsetFromBlockStart = 0;
@@ -194,7 +194,7 @@ export class AppComponent implements OnInit {
         }
       }
       ctx.restore();
-      ctx.translate(0, lotDrawDepth );
+      ctx.translate(0, lotDrawDepth);
     }
 
     // clean up
@@ -202,11 +202,11 @@ export class AppComponent implements OnInit {
   }
 
   drawBuilding(ctx: CanvasRenderingContext2D, lotDrawWidth: number, lotDrawDepth: number,
-               frontYardPercent: number, sideYardPercent: number, backYardPercent: number, flipVertically: boolean): void {
+    frontYardPercent: number, sideYardPercent: number, backYardPercent: number, flipVertically: boolean): void {
     ctx.save();
 
-    if ( flipVertically ) {
-      ctx.translate(lotDrawWidth, lotDrawDepth );
+    if (flipVertically) {
+      ctx.translate(lotDrawWidth, lotDrawDepth);
       ctx.rotate(AppComponent.degreesToRadians(180));
     }
 

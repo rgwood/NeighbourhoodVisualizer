@@ -3,7 +3,7 @@
     <div class='col-xs-12 col-md-12 col-lg-6'>
       <h1>Neighbourhood Visualizer</h1>
       <p>
-        A tool to quickly estimate the effects of land use regulations and road width. 
+        A tool to quickly estimate the effects of land use regulations and road width.
         <a href='https://github.com/rgwood/SetbackTool'>Source code available</a>.
       </p>
       <div class="card border-primary mb-3">
@@ -57,23 +57,27 @@
             <div class="form-group">
               <h5>Streets</h5>
               <label for="roadWidth">Road width:
-                <strong>{{ inputForm.value.roadWidthInM }}m</strong></label>
-              <input id="roadWidth" type="range" min="1" max="30" class="slider form-control" formControlName="roadWidthInM">            
+                <strong>{{ inputForm.value.roadWidthInM }}m</strong>
+              </label>
+              <input id="roadWidth" type="range" min="1" max="30" class="slider form-control" formControlName="roadWidthInM">
               <label for="lanewayWidth">Laneway width:
-                <strong>{{ inputForm.value.lanewayWidthInM }}m</strong></label>
+                <strong>{{ inputForm.value.lanewayWidthInM }}m</strong>
+              </label>
               <input id="lanewayWidth" type="range" min="1" max="30" class="slider form-control" formControlName="lanewayWidthInM">
             </div>
             <div class="form-group">
               <h5>Blocks</h5>
               <label for="maxBlockLength">Maximum block length:
-                <strong>{{ inputForm.value.maxBlockLengthInM }}m</strong></label>
+                <strong>{{ inputForm.value.maxBlockLengthInM }}m</strong>
+              </label>
               <input id="maxBlockLength" type="range" min="20" max="300" class="slider form-control" formControlName="maxBlockLengthInM">
-              </div>
+            </div>
 
             <div class="form-group">
-              <h5>Building Height</h5>
+              <h5>Maximum number of floors</h5>
               <label for="storeys">
-                The average building is <strong>{{ inputForm.value.storeys }}</strong> storeys tall</label>
+                Buildings are allowed to be
+                <strong>{{ inputForm.value.storeys }}</strong> storeys tall</label>
               <input id="storeys" type="range" min="1" max="20" class="slider form-control" formControlName="storeys">
             </div>
             <div class="form-group">

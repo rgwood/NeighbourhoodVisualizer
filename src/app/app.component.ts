@@ -80,20 +80,28 @@ export class AppComponent implements OnInit {
                     roadWidthInM, lanewayWidthInM, maxBlockLengthInM);
   }
 
-  calculateStatistics(lotDepthInM: number, lotWidthInM: number,
+  public calculateStatistics(lotDepthInM: number, lotWidthInM: number,
     frontYardPercent: number, sideYardPercent: number, backYardPercent: number, storeys: number,
     roadWidthInM: number, lanewayWidthInM: number, maxBlockLengthInM: number): void {
-    console.log(`lot depth: ${lotDepthInM}m, width: ${lotWidthInM}m`);
-    // over 1 km^2...
-    // what % is land/road/building?
-    // how much floor space total?
-    // what are the gross and net floor space ratios?
-    // how many dwelling units (assuming a specific size of unit?)
+    /*
+    Lots of questions we want to answer like:
+    what % is land/road/building?
+    how much floor space total?
+    what are the gross and net floor space ratios?
+    how many dwelling units (assuming a specific size of unit?)
 
-    // Big Q: how do we calculate this for a square kilometre when blocks don't line up exactly?
-    // I think we just calculate for a certain area then normalize that to a square kilometre
-    // what's the smallest area we can do that for?
-    // I think it's: road on top and left, then 2 blocks of housing with laneway in between
+    Some of this we want to answers for a standard measure of area (1km^2)
+    This is really simple: find the answer for a single block then normalize that to a square kilometre
+    A single representative "block" is one that can be tiled to make a whole neighbourhood
+    I'm doing this as: road on top and left, then the bottom right is 2 blocks of housing with laneway in between:
+     ____________
+    |  __________
+    | | | | | | |
+    | |_|_|_|_|_|
+    | |__________
+    | | | | | | |
+    | |_|_|_|_|_|
+    */
     let blockWidthInM = roadWidthInM, blockDepthInM = roadWidthInM;
     blockDepthInM += lotDepthInM + lanewayWidthInM + lotDepthInM;
     let maxNumOfAdjacentLots = Math.floor(maxBlockLengthInM / lotWidthInM);
@@ -122,11 +130,6 @@ export class AppComponent implements OnInit {
 
     // scale block to 1km
     this.floorSpaceIn1SqKm = (1000000 / totalBlockAreaInSqM) * totalFloorSpaceInBlockInSqM;
-
-    // console.log(`total block area: ${blockAreaInSqM}m^2`);
-    // console.log(`total road area: ${blockAreaRoadsOnlyInSqM}m^2`);
-    // console.log(`total lot area: ${blockAreaPrivateLandOnlyInSqM}m^2`);
-    // console.log(`total land with buildings on it: ${blockAreaLandWithBuildingsOnItInSqM}m^2`);
   }
 
   drawCanvas(lotDepthInM: number, lotWidthInM: number,

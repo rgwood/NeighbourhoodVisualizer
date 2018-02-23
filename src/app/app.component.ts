@@ -2,7 +2,7 @@ import { Component, OnInit} from '@angular/core';
 import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
 
 const BuildingColour = 'rgb(0, 82, 110)';
-const YardColour = 'rgb(200, 200, 200)';
+const YardColour = 'rgb(240, 240, 240)';
 const RoadColour = 'rgb(84, 84, 84)';
 // const MetresPerFoot = 0.3048;
 

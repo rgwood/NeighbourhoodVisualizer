@@ -23,7 +23,7 @@
             assuming an average unit size of {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m
             <sup>2</sup> (note: this assumes no explicit caps on the number of units in a building). The max FSR on a given lot is effectively 
             {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) | number:'1.0-2'}}, but the max
-            <em>net</em> (including streets) FSR of the entire neighbourhood is {{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}.
+            <em>gross</em> (including streets) FSR of the entire neighbourhood is {{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}.
           </p>
           <p [hidden]="!inputForm.valid ">
             The

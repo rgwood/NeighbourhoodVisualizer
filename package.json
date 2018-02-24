@@ -9,7 +9,7 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "build-deploy": "ng build --prod && netlifyctl deploy --base-directory dist --name setbacks"
+    "build-deploy": "ng build --prod && netlifyctl deploy --base-directory dist --name neighbourhood"
   },
   "private": true,
   "dependencies": {

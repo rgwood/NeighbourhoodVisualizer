@@ -20,6 +20,7 @@ export class AppComponent implements OnInit {
   roadRatio: number;
   buildingRatio: number;
   floorSpaceIn1SqKm: number;
+  lotsIn1SqKm: number;
 
   static degreesToRadians(degrees: number) {
     return degrees * Math.PI / 180;
@@ -36,7 +37,7 @@ export class AppComponent implements OnInit {
       frontYardPercent: 20,
       sideYardPercent: 10,
       backYardPercent: 45,
-      storeys: [2, [Validators.required, Validators.min(0), Validators.max(50)]],
+      storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
       averageUnitSizeInSqM: 100,
       roadWidthInM: [10, [Validators.required, Validators.min(0), Validators.max(30)]],
       lanewayWidthInM: [4, [Validators.required, Validators.min(0), Validators.max(30)]],
@@ -126,6 +127,7 @@ export class AppComponent implements OnInit {
 
     // scale block to 1km
     this.floorSpaceIn1SqKm = (1000000 / totalBlockAreaInSqM) * totalFloorSpaceInBlockInSqM;
+    this.lotsIn1SqKm = (1000000 / totalBlockAreaInSqM) * lotsInBlock;
   }
 
   drawCanvas(lotDepthInM: number, lotWidthInM: number,

@@ -1,42 +1,52 @@
 <div class='container'>
   <div class='row'>
-      <div class='col-xs-12 col-md-12 col-lg-6'>
-          <h1>Neighbourhood Visualizer</h1>
-          <p>
-              A tool to quickly estimate the effects of land use regulations and road width.
-              <a href='https://github.com/rgwood/NeighbourhoodVisualizer'>Source code available</a>.
-            </p>
-      </div>
+    <div class='col-xs-12 col-md-12 col-lg-6'>
+      <h1>Neighbourhood Visualizer</h1>
+      <p>
+        A tool to quickly estimate the effects of land use regulations and road width.
+        <a href='https://github.com/rgwood/NeighbourhoodVisualizer'>Source code available</a>.
+      </p>
+    </div>
   </div>
   <div class='row'>
     <div class='col-xs-12 col-md-12 col-lg-6'>
       <div class="card border-primary mb-3">
         <div class="card-header">Results</div>
         <div class="card-body">
-          <canvas class="center-block" id="setbackCanvas" width="1000" height="800"></canvas>
-          <p [hidden]="!inputForm.valid ">
-            The land in a neighbourhood like this is covered by {{yardRatio | percent}} "yards", {{roadRatio | percent}} roads, and {{buildingRatio
-            | percent}} buildings. One square kilometre of blocks like this would allow {{floorSpaceIn1SqKm | number:'1.0-0'}}
-            m
-            <sup>2</sup>
-            of floor space, or approximately {{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} dwelling units
-            assuming an average unit size of {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m
-            <sup>2</sup> (note: this assumes no explicit caps on the number of units in a building). The max FSR on a given lot is effectively 
-            {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) | number:'1.0-2'}}, but the max
-            <em>gross</em> (including streets) FSR of the entire neighbourhood is {{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}.
-          </p>
-          <p [hidden]="!inputForm.valid ">
-            The
-            <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover {{bldgArea | number:'1.0-0'}} m
-            <sup>2</sup> at most on a {{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} m
-            <sup>2</sup> lot. This works out to
-            <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
-            of the lot. With {{ inputForm.value.storeys }}-storey buildings, we can have {{bldgArea * inputForm.value.storeys | number:'1.0-0'}}
-            m
-            <sup>2</sup>
-            of living space per lot. This works out to {{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth)
-            | number:'1.0-2'}} FSR/FAR.
-          </p>
+          <canvas class="center-block" id="setbackCanvas" width="1000" height="870"></canvas>
+          <div [hidden]="!inputForm.valid ">
+                  <p>The land is covered by <strong>{{yardRatio | percent}}</strong> "yards", <strong>{{roadRatio | percent}}</strong> roads, and <strong>{{buildingRatio
+                  | percent}}</strong> buildings. 1 km<sup>2</sup> of blocks like this could have roughly: 
+                </p> 
+                
+                <p></p>
+                <ul>
+                  <li><strong>{{floorSpaceIn1SqKm | number:'1.0-0'}}
+                    m<sup>2</sup></strong> of floor space</li>
+                    <li><strong>{{lotsIn1SqKm |  number:'1.0-0'}}</strong> lots</li>
+                    <li>
+                        <strong>{{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}}</strong> homes with an average size of 
+                        {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m<sup>2</sup> 
+                        <small>(assuming no explicit caps on the number of households per lot)</small>
+                    </li>
+                </ul> 
+                
+                The max Floor Area Ratio (FAR) on a given lot
+                  is effectively <strong>{{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) |
+                  number:'1.0-2'}}</strong>, but the max
+                  <em>gross</em> (including streets) FAR of the entire neighbourhood is <strong>{{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}</strong>.
+                
+                <p>
+                  The
+                  <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover 
+                <strong>{{bldgArea | number:'1.0-0'}} m<sup>2</sup> </strong>
+                  at most on a <strong>{{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} m<sup>2</sup></strong> lot, or
+                  <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
+                  of the lot. With {{ inputForm.value.storeys }}-storey buildings, we can have <strong>{{bldgArea * inputForm.value.storeys | number:'1.0-0'}}
+                  m<sup>2</sup></strong>
+                  of floor space per lot.
+                </p>
+          </div>
         </div>
       </div>
     </div>

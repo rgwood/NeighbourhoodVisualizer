@@ -13,7 +13,6 @@ const RoadColour = 'rgb(84, 84, 84)';
 })
 
 export class AppComponent implements OnInit {
-  title = 'app';
   inputForm: FormGroup;
   canvas: HTMLCanvasElement;
   bldgArea: number;
@@ -31,7 +30,6 @@ export class AppComponent implements OnInit {
   }
 
   createForm() {
-    console.log('in createForm()');
     this.inputForm = this.fb.group({
       lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
       lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
@@ -48,8 +46,6 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('in OnInit()');
-
     this.canvas = document.getElementById('setbackCanvas') as HTMLCanvasElement;
     this.inputForm.valueChanges.subscribe(val => {
       if (this.inputForm.valid) {
@@ -79,6 +75,7 @@ export class AppComponent implements OnInit {
       roadWidthInM, lanewayWidthInM, maxBlockLengthInM);
   }
 
+  // todo: refactor this so it can be tested. What's the best way to return multiple values from a single method in TS?
   public calculateStatistics(lotDepthInM: number, lotWidthInM: number,
     frontYardPercent: number, sideYardPercent: number, backYardPercent: number, storeys: number,
     roadWidthInM: number, lanewayWidthInM: number, maxBlockLengthInM: number): void {

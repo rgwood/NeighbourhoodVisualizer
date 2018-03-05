@@ -3,7 +3,7 @@
     <div class='col-xs-12 col-md-12 col-lg-6'>
       <h1>Neighbourhood Visualizer</h1>
       <p>
-        A tool to quickly estimate the effects of land use regulations and road width.
+        A tool to quickly estimate the effects of land use policy and road width.
         <a href='https://github.com/rgwood/NeighbourhoodVisualizer'>Source code available</a>.
       </p>
     </div>
@@ -23,11 +23,11 @@
                 <ul>
                   <li><strong>{{floorSpaceIn1SqKm | number:'1.0-0'}}
                     m<sup>2</sup></strong> of floor space</li>
-                    <li><strong>{{lotsIn1SqKm |  number:'1.0-0'}}</strong> lots</li>
+                    <li><strong>{{lotsIn1SqKm |  number:'1.0-0'}}</strong> buildings</li>
                     <li>
                         <strong>{{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}}</strong> homes with an average size of 
                         {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m<sup>2</sup> 
-                        <small>(assuming no explicit caps on the number of households per lot)</small>
+                        <small>(<em>if</em> the city allows multiple households to live in the same building)</small>
                     </li>
                 </ul> 
                 

@@ -40,8 +40,8 @@ export class AppComponent implements OnInit {
       backYardPercent: 45,
       storeys: [2, [Validators.required, Validators.min(0), Validators.max(50)]],
       averageUnitSizeInSqM: 100,
-      roadWidthInM: [10, [Validators.required, Validators.min(1), Validators.max(30)]],
-      lanewayWidthInM: [4, [Validators.required, Validators.min(1), Validators.max(30)]],
+      roadWidthInM: [10, [Validators.required, Validators.min(0), Validators.max(30)]],
+      lanewayWidthInM: [4, [Validators.required, Validators.min(0), Validators.max(30)]],
       // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
       maxBlockLengthInM: [100, [Validators.required, Validators.min(1), Validators.max(300)]],
     });

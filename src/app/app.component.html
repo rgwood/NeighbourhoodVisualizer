@@ -54,7 +54,7 @@
     <div class='col-xs-12 col-md-12 col-lg-4'>
       <form [formGroup]="inputForm" novalidate>
         <div class="card card-primary">
-          <div class="card-header">Options</div>
+          <div class="card-header">Options <button (click)='resetForm();'>Reset?</button></div>
           <div class="card-body">
             <div class="form-group">
               <h5>Setback Requirements</h5>

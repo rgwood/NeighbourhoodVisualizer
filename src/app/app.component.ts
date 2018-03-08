@@ -21,33 +21,31 @@ export class AppComponent implements OnInit {
   buildingRatio: number;
   floorSpaceIn1SqKm: number;
   lotsIn1SqKm: number;
+  defaultInputConfig = {
+    lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
+    lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
+    frontYardPercent: 20,
+    sideYardPercent: 10,
+    backYardPercent: 45,
+    storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
+    averageUnitSizeInSqM: 100,
+    roadWidthInM: [10, [Validators.required, Validators.min(0), Validators.max(30)]],
+    lanewayWidthInM: [4, [Validators.required, Validators.min(0), Validators.max(30)]],
+    // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
+    maxBlockLengthInM: [100, [Validators.required, Validators.min(1), Validators.max(300)]],
+  };
 
   static degreesToRadians(degrees: number) {
     return degrees * Math.PI / 180;
   }
 
-  constructor(private fb: FormBuilder) { // <--- inject FormBuilder
-    this.createForm();
+  // <--- inject FormBuilder. Love how TS automatically assigns instance variables from constructor params
+  constructor(private fb: FormBuilder) {
   }
 
-  createForm() {
-    this.inputForm = this.fb.group({
-      lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
-      lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
-      frontYardPercent: 20,
-      sideYardPercent: 10,
-      backYardPercent: 45,
-      storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
-      averageUnitSizeInSqM: 100,
-      roadWidthInM: [10, [Validators.required, Validators.min(0), Validators.max(30)]],
-      lanewayWidthInM: [4, [Validators.required, Validators.min(0), Validators.max(30)]],
-      // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
-      maxBlockLengthInM: [100, [Validators.required, Validators.min(1), Validators.max(300)]],
-    });
-  }
-
-  ngOnInit(): void {
+  resetForm() {
     this.canvas = document.getElementById('setbackCanvas') as HTMLCanvasElement;
+    this.inputForm = this.fb.group(this.defaultInputConfig);
     this.inputForm.valueChanges.subscribe(val => {
       if (this.inputForm.valid) {
         this.calculateStatsAndDrawCanvas();
@@ -55,6 +53,10 @@ export class AppComponent implements OnInit {
     });
 
     this.calculateStatsAndDrawCanvas();
+  }
+
+  ngOnInit(): void {
+    this.resetForm();
   }
 
   calculateStatsAndDrawCanvas(): void {

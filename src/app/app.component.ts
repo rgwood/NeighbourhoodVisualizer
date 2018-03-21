@@ -4,7 +4,9 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 const BuildingColour = 'rgb(0, 82, 110)';
 const YardColour = 'rgb(240, 240, 240)';
 const RoadColour = 'rgb(84, 84, 84)';
+const ParkColour = 'rgb(7,100,67)';
 // const MetresPerFoot = 0.3048;
+const HousingBlockToParkBlockRatio = 4;
 
 @Component({
   selector: 'app-root',
@@ -136,6 +138,10 @@ export class AppComponent implements OnInit {
     frontYardPercent: number, sideYardPercent: number, backYardPercent: number,
     roadWidthInM: number, lanewayWidthInM: number, maxBlockLengthInM: number): void {
     console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
+    
+    // TODO: iterate on blocks, draw every 4th or whatever block as park
+    let buildingsPerBlockOnSingleStreet = Math.floor(maxBlockLengthInM / lotWidthInM);
+    let blockLengthInM = buildingsPerBlockOnSingleStreet * lotWidthInM;
     const ctx = this.canvas.getContext('2d');
     ctx.save();
 
@@ -155,51 +161,70 @@ export class AppComponent implements OnInit {
     let roadDrawWidth = this.scaleRealUnitForCanvas(roadWidthInM, ctxPerspectiveCanvasHeight);
     let lanewayDrawWidth = this.scaleRealUnitForCanvas(lanewayWidthInM, ctxPerspectiveCanvasHeight);
     let maxBlockDrawLength = this.scaleRealUnitForCanvas(maxBlockLengthInM, ctxPerspectiveCanvasHeight);
+    let blockDrawLength = this.scaleRealUnitForCanvas(blockLengthInM, ctxPerspectiveCanvasHeight);
 
-    if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
-      const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
-      lotDrawDepth *= scalingFactor;
-      lotDrawWidth *= scalingFactor;
-    }
+    // if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
+    //   const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
+    //   lotDrawDepth *= scalingFactor;
+    //   lotDrawWidth *= scalingFactor;
+    // }
 
-    ctx.translate(roadDrawWidth, 0);
     let blockDrawHeight = roadDrawWidth + lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
+    let maxBlockDrawWidthIncludingRoads = roadDrawWidth + maxBlockDrawLength + roadDrawWidth;
     let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / blockDrawHeight);
     // doesn't include road width but that's OK, we just need a loose upper bound to avoid doing tooo much work
-    let buildingsThatFitHorizontallyInCanvas = Math.ceil(ctxPerspectiveCanvasWidth / lotDrawWidth);
+    // let buildingsThatFitHorizontallyInCanvas = Math.ceil(ctxPerspectiveCanvasWidth / lotDrawWidth);
+    // upper bound to avoid doing tooo much work
+    let blocksThatFitHorizontallyIntoCanvas = Math.ceil(ctxPerspectiveCanvasWidth / (blockDrawLength));
 
-    const MaxInnerLoopIterations = 10000;
-    let expectedInnerLoopIterations = blocksThatFitVerticallyInCanvas * buildingsThatFitHorizontallyInCanvas;
-    if (expectedInnerLoopIterations > MaxInnerLoopIterations) {
+    const MaxBuildingsToDraw = 10000;
+    let expectedBuildingsToDraw = blocksThatFitVerticallyInCanvas * blocksThatFitHorizontallyIntoCanvas * buildingsPerBlockOnSingleStreet * 2;
+    if (expectedBuildingsToDraw > MaxBuildingsToDraw) {
       // todo: how do I throw a regular exception?
       // i.e. new Exception(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`)
       throw new DOMException();
     }
 
-    for (let i = 0; i < blocksThatFitVerticallyInCanvas * 2; i++) {
-      let ctxIsAtRoad = (i % 2 === 0); // is our context currently on a road (as opposed to a laneway?)
-      ctx.translate(0, (ctxIsAtRoad ? roadDrawWidth : lanewayDrawWidth));
-      ctx.save();
+    for (let i = 0; i < blocksThatFitVerticallyInCanvas; i++) {
+      // let ctxIsAtRoad = (i % 2 === 0); // is our context currently on a road (as opposed to a laneway?)
+      ctx.translate(0, roadDrawWidth);
 
-      let yOffsetFromBlockStart = 0;
-      for (let j = 0; j < buildingsThatFitHorizontallyInCanvas; j++) {
-        if (yOffsetFromBlockStart + lotDrawWidth >= maxBlockDrawLength) { // start a new block
-          ctx.translate(roadDrawWidth, 0);
-          this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, !ctxIsAtRoad);
-          ctx.translate(lotDrawWidth, 0);
-          yOffsetFromBlockStart = lotDrawWidth;
-        } else { // draw a building!
-          this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, !ctxIsAtRoad);
-          ctx.translate(lotDrawWidth, 0);
-          yOffsetFromBlockStart += lotDrawWidth;
-        }
+      ctx.save();
+      for (let currentBlock = 1; currentBlock < blocksThatFitHorizontallyIntoCanvas; currentBlock++) {
+        ctx.translate(roadDrawWidth, 0);
+        
+        this.drawBlockOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, lanewayDrawWidth);
+
+        ctx.translate(blockDrawLength, 0);
       }
       ctx.restore();
-      ctx.translate(0, lotDrawDepth);
+
+      ctx.translate(0, lotDrawDepth + lanewayDrawWidth + lotDrawDepth);
     }
 
     // clean up
     ctx.restore();
+  }
+
+  private drawBlockOfBuildings(ctx: CanvasRenderingContext2D, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number, 
+    lotDrawDepth: number, frontYardPercent: number, sideYardPercent: number, backYardPercent: number, lanewayDrawWidth: number) {
+    ctx.save();
+    this.drawRowOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, true);
+    ctx.restore();
+    ctx.save();
+    ctx.translate(0, lotDrawDepth + lanewayDrawWidth);
+    this.drawRowOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, false);
+    ctx.restore();
+  }
+
+  private drawRowOfBuildings(ctx: CanvasRenderingContext2D, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number,
+    lotDrawDepth: number, frontYardPercent: number, sideYardPercent: number, backYardPercent: number, ctxIsAtRoad: boolean) {
+    let yOffsetFromBlockStart = 0;
+    // draw a row of buildings
+    for (let j = 0; j < buildingsPerBlockOnSingleStreet; j++) {
+      this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, !ctxIsAtRoad);
+      ctx.translate(lotDrawWidth, 0);
+    }
   }
 
   drawBuilding(ctx: CanvasRenderingContext2D, lotDrawWidth: number, lotDrawDepth: number,

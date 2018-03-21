@@ -4,7 +4,7 @@ import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms'
 const BuildingColour = 'rgb(0, 82, 110)';
 const YardColour = 'rgb(240, 240, 240)';
 const RoadColour = 'rgb(84, 84, 84)';
-const ParkColour = 'rgb(7,100,67)';
+const ParkColour = 'rgb(57,178,30)';
 // const MetresPerFoot = 0.3048;
 const HousingBlockToParkBlockRatio = 4;
 
@@ -139,7 +139,6 @@ export class AppComponent implements OnInit {
     roadWidthInM: number, lanewayWidthInM: number, maxBlockLengthInM: number): void {
     console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
     
-    // TODO: iterate on blocks, draw every 4th or whatever block as park
     let buildingsPerBlockOnSingleStreet = Math.floor(maxBlockLengthInM / lotWidthInM);
     let blockLengthInM = buildingsPerBlockOnSingleStreet * lotWidthInM;
     const ctx = this.canvas.getContext('2d');
@@ -169,9 +168,9 @@ export class AppComponent implements OnInit {
     //   lotDrawWidth *= scalingFactor;
     // }
 
-    let blockDrawHeight = roadDrawWidth + lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
+    let blockDrawHeight = lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
     let maxBlockDrawWidthIncludingRoads = roadDrawWidth + maxBlockDrawLength + roadDrawWidth;
-    let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / blockDrawHeight);
+    let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / (blockDrawHeight + roadDrawWidth));
     // doesn't include road width but that's OK, we just need a loose upper bound to avoid doing tooo much work
     // let buildingsThatFitHorizontallyInCanvas = Math.ceil(ctxPerspectiveCanvasWidth / lotDrawWidth);
     // upper bound to avoid doing tooo much work
@@ -186,14 +185,19 @@ export class AppComponent implements OnInit {
     }
 
     for (let i = 0; i < blocksThatFitVerticallyInCanvas; i++) {
-      // let ctxIsAtRoad = (i % 2 === 0); // is our context currently on a road (as opposed to a laneway?)
       ctx.translate(0, roadDrawWidth);
 
       ctx.save();
       for (let currentBlock = 1; currentBlock < blocksThatFitHorizontallyIntoCanvas; currentBlock++) {
         ctx.translate(roadDrawWidth, 0);
         
-        this.drawBlockOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, lanewayDrawWidth);
+        if ((currentBlock + i) % HousingBlockToParkBlockRatio === 0) {
+          ctx.fillStyle = ParkColour;
+          ctx.fillRect(0, 0, blockDrawLength, blockDrawHeight);
+        } else {
+          this.drawBlockOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, lanewayDrawWidth);
+        }
+        
 
         ctx.translate(blockDrawLength, 0);
       }

@@ -13,9 +13,10 @@
       <div class="card border-primary mb-3">
         <div class="card-header">Results</div>
         <div class="card-body">
-          <canvas class="center-block" id="setbackCanvas" width="1000" height="870"></canvas>
+          <canvas class="center-block" id="setbackCanvas" width="1000" height="913"></canvas>
           <div [hidden]="!inputForm.valid ">
-                  <p>The land is covered by <strong>{{yardRatio | percent}}</strong> "yards", <strong>{{roadRatio | percent}}</strong> roads, 
+                  <p>The land is covered by <strong>{{yardRatio | percent}}</strong> "yards", <strong>{{roadRatio | percent}}</strong> roads,
+                    <strong>{{sidewalkRatio | percent}}</strong> sidewalks,
                     <span *ngIf="inputForm.value.includeParks"><strong>{{parkRatio | percent}}</strong> parks,</span>
                     and <strong>{{buildingRatio
                   | percent}}</strong> buildings. 1 km<sup>2</sup> of blocks like this could have roughly: 
@@ -80,6 +81,10 @@
                 <strong>{{ inputForm.value.lanewayWidthInM }}m</strong>
               </label>
               <input id="lanewayWidth" type="range" min="0" max="30" class="slider form-control" formControlName="lanewayWidthInM">
+              <label for="roadWidth">Sidewalk width:
+                <strong>{{ inputForm.value.sidewalkWidthInM }}m</strong>
+              </label>
+              <input id="sidewalkWidth" type="range" min="0" max="30" class="slider form-control" formControlName="sidewalkWidthInM">
             </div>
             <div class="form-group">
               <h5>Blocks</h5>

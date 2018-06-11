@@ -5,6 +5,7 @@ const BuildingColour = 'rgb(0, 82, 110)';
 const YardColour = 'rgb(240, 240, 240)';
 const RoadColour = 'rgb(84, 84, 84)';
 const ParkColour = 'rgb(57,178,30)';
+const SidewalkColour = 'rgb(209,209,209)';
 // const MetresPerFoot = 0.3048;
 
 const HousingBlockToParkBlockRatio = 4;
@@ -21,6 +22,7 @@ export class AppComponent implements OnInit {
   bldgArea: number;
   yardRatio: number;
   parkRatio: number;
+  sidewalkRatio: number;
   roadRatio: number;
   buildingRatio: number;
   floorSpaceIn1SqKm: number;
@@ -33,8 +35,9 @@ export class AppComponent implements OnInit {
     backYardPercent: 45,
     storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
     averageUnitSizeInSqM: 100,
-    roadWidthInM: [10, [Validators.required, Validators.min(0), Validators.max(30)]],
-    lanewayWidthInM: [4, [Validators.required, Validators.min(0), Validators.max(30)]],
+    roadWidthInM: [11, [Validators.required, Validators.min(0), Validators.max(30)]],
+    sidewalkWidthInM: [8, [Validators.required, Validators.min(0), Validators.max(30)]],
+    lanewayWidthInM: [6, [Validators.required, Validators.min(0), Validators.max(30)]],
     // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
     maxBlockLengthInM: [100, [Validators.required, Validators.min(1), Validators.max(300)]],
     includeParks: [false],
@@ -76,20 +79,22 @@ export class AppComponent implements OnInit {
     let storeys: number = this.inputForm.get('storeys').value;
     let roadWidthInM: number = this.inputForm.get('roadWidthInM').value;
     let lanewayWidthInM: number = this.inputForm.get('lanewayWidthInM').value;
+    let sidewalkWidthInM: number = this.inputForm.get('sidewalkWidthInM').value;
     let maxBlockLengthInM: number = this.inputForm.get('maxBlockLengthInM').value;
     let includeParks: boolean = this.inputForm.get('includeParks').value;
     let oneParkPerThisManyHousingBlocks: number = this.inputForm.get('oneParkPerThisManyHousingBlocks').value;
 
     this.calculateStatistics(lotDepthInM, lotWidthInM, frontYardPercent, sideYardPercent, backYardPercent,
-      storeys, roadWidthInM, lanewayWidthInM, maxBlockLengthInM, includeParks, oneParkPerThisManyHousingBlocks);
+      storeys, roadWidthInM, lanewayWidthInM, sidewalkWidthInM, maxBlockLengthInM, includeParks, oneParkPerThisManyHousingBlocks);
     this.drawCanvas(lotDepthInM, lotWidthInM, frontYardPercent, sideYardPercent, backYardPercent,
-      roadWidthInM, lanewayWidthInM, maxBlockLengthInM, includeParks, oneParkPerThisManyHousingBlocks);
+      roadWidthInM, lanewayWidthInM, sidewalkWidthInM, maxBlockLengthInM, includeParks, oneParkPerThisManyHousingBlocks);
   }
 
   // todo: refactor this so it can be tested. What's the best way to return multiple values from a single method in TS?
   public calculateStatistics(lotDepthInM: number, lotWidthInM: number,
     frontYardPercent: number, sideYardPercent: number, backYardPercent: number, storeys: number,
-    roadWidthInM: number, lanewayWidthInM: number, maxBlockLengthInM: number, includeParks: boolean, oneParkPerThisManyBlocks: number): void {
+    roadWidthInM: number, lanewayWidthInM: number, sidewalkWidthInM: number, maxBlockLengthInM: number, 
+    includeParks: boolean, oneParkPerThisManyBlocks: number): void {
     /*
     Lots of questions we want to answer like:
     what % is land/road/building?
@@ -101,26 +106,37 @@ export class AppComponent implements OnInit {
     This is really simple: find the answer for a single block then normalize that to a square kilometre
     A single representative "block" is one that can be tiled to make a whole neighbourhood
     I'm doing this as: road on top and left, then the bottom right is 2 blocks of housing with laneway in between:
-     ____________
-    |  __________
-    | | | | | | |
-    | |_|_|_|_|_|
-    | |__________
-    | | | | | | |
-    | |_|_|_|_|_|
+     __________________
+    |  ________________
+    | |  _ _ _ _ _ _  |
+    | | | | | | | | | |
+    | | |_|_|_|_|_|_| |
+    |     _ _ _ _ _ _   
+    | | | | | | | | | |
+    | | |_|_|_|_|_|_| |
+    | |_______________|
+    
     */
-    let blockWidthInM = roadWidthInM, blockDepthInM = roadWidthInM;
-    blockDepthInM += lotDepthInM + lanewayWidthInM + lotDepthInM;
+    let blockWidthInM = roadWidthInM;
     let maxNumOfAdjacentLots = Math.floor(maxBlockLengthInM / lotWidthInM);
-    blockWidthInM += maxNumOfAdjacentLots * lotWidthInM;
-
+    blockWidthInM += maxNumOfAdjacentLots * lotWidthInM + 2 * sidewalkWidthInM;
+    
+    let blockDepthInM = roadWidthInM;
+    blockDepthInM += lotDepthInM + lanewayWidthInM + lotDepthInM + 2 * sidewalkWidthInM;
+    
     const totalBlockAreaInSqM = blockDepthInM * blockWidthInM;
     const blockAreaRoadsOnlyInSqM = (blockDepthInM * roadWidthInM) +
-      (maxNumOfAdjacentLots * lotWidthInM * roadWidthInM) +
-      (maxNumOfAdjacentLots * lotWidthInM * lanewayWidthInM);
+      (maxNumOfAdjacentLots * lotWidthInM + 2 * sidewalkWidthInM) * roadWidthInM + 
+      (maxNumOfAdjacentLots * lotWidthInM ) * lanewayWidthInM; // assume sidewalk surrounds entire block, even at laneway entrance
+    
     const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row of houses on each side of the laneway
 
     const blockAreaPrivateLandOnlyInSqM = lotsInBlock * lotDepthInM * lotWidthInM;
+
+    const blockAreaSidewalkOnlyInSqM = 
+    (sidewalkWidthInM + maxNumOfAdjacentLots * lotWidthInM + sidewalkWidthInM) * ( 2 * sidewalkWidthInM + 2 * lotDepthInM + lanewayWidthInM) // whole lock from sidewalks inward
+    - blockAreaPrivateLandOnlyInSqM // private lots
+    - (maxNumOfAdjacentLots * lotWidthInM) * lanewayWidthInM; // laneway
 
     const bldgDepthInM = this.calculateBldgDepth(lotDepthInM, frontYardPercent, backYardPercent);
     const bldgWidthInM = this.calculateBldgWidth(lotWidthInM, sideYardPercent);
@@ -140,15 +156,16 @@ export class AppComponent implements OnInit {
     let roadAreaInSqM = blockAreaRoadsOnlyInSqM * (numOfBlocks - numOfParkBlocks);
     let yardAreaInSqM = blockAreaYardsOnlyInSqM * (numOfBlocks - numOfParkBlocks);
     let buildingAreaInSqM = blockAreaLandWithBuildingsOnItInSqM * (numOfBlocks - numOfParkBlocks);
+    let sidewalkAreaInSqM = blockAreaSidewalkOnlyInSqM * numOfBlocks;
     
     let parkWidthInM = maxNumOfAdjacentLots * lotWidthInM;
     let parkDepthInM = lotDepthInM + lanewayWidthInM + lotDepthInM;
     let parkAreaInSqM = parkWidthInM * parkDepthInM * numOfParkBlocks;
     // add roads next to park
-    roadAreaInSqM += numOfParkBlocks * ((blockDepthInM * roadWidthInM) + (maxNumOfAdjacentLots * lotWidthInM * roadWidthInM));
+    roadAreaInSqM += numOfParkBlocks * ((blockDepthInM * roadWidthInM) + ((2 * sidewalkWidthInM + maxNumOfAdjacentLots * lotWidthInM) * roadWidthInM));
 
     let expectedTotalAreaInSqM = numOfBlocks * totalBlockAreaInSqM;
-    let calculatedTotalAreaInSqM = roadAreaInSqM + yardAreaInSqM + buildingAreaInSqM + parkAreaInSqM;
+    let calculatedTotalAreaInSqM = roadAreaInSqM + yardAreaInSqM + buildingAreaInSqM + parkAreaInSqM + sidewalkAreaInSqM;
 
     // todo: this should prolly be a unit test
     if (Math.abs(expectedTotalAreaInSqM - calculatedTotalAreaInSqM ) > 0.01) {
@@ -158,6 +175,7 @@ export class AppComponent implements OnInit {
     this.yardRatio = yardAreaInSqM / calculatedTotalAreaInSqM;
     this.roadRatio = roadAreaInSqM / calculatedTotalAreaInSqM;
     this.parkRatio = parkAreaInSqM / calculatedTotalAreaInSqM;
+    this.sidewalkRatio = sidewalkAreaInSqM / calculatedTotalAreaInSqM;
     this.buildingRatio = buildingAreaInSqM / calculatedTotalAreaInSqM;
 
     // scale block to 1km
@@ -167,8 +185,8 @@ export class AppComponent implements OnInit {
 
   drawCanvas(lotDepthInM: number, lotWidthInM: number,
     frontYardPercent: number, sideYardPercent: number, backYardPercent: number,
-    roadWidthInM: number, lanewayWidthInM: number, maxBlockLengthInM: number, includeParks: boolean,
-    oneParkPerThisManyHousingBlocks: number): void {
+    roadWidthInM: number, lanewayWidthInM: number, sidewalkWidthInM: number, maxBlockLengthInM: number, 
+    includeParks: boolean, oneParkPerThisManyHousingBlocks: number): void {
     // console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
     
     let buildingsPerBlockOnSingleStreet = Math.floor(maxBlockLengthInM / lotWidthInM);
@@ -191,7 +209,7 @@ export class AppComponent implements OnInit {
     let lotDrawWidth = this.scaleRealUnitForCanvas(lotWidthInM, ctxPerspectiveCanvasHeight);
     let roadDrawWidth = this.scaleRealUnitForCanvas(roadWidthInM, ctxPerspectiveCanvasHeight);
     let lanewayDrawWidth = this.scaleRealUnitForCanvas(lanewayWidthInM, ctxPerspectiveCanvasHeight);
-    let maxBlockDrawLength = this.scaleRealUnitForCanvas(maxBlockLengthInM, ctxPerspectiveCanvasHeight);
+    let sidewalkDrawWidth = this.scaleRealUnitForCanvas(sidewalkWidthInM, ctxPerspectiveCanvasHeight);
     let blockDrawLength = this.scaleRealUnitForCanvas(blockLengthInM, ctxPerspectiveCanvasHeight);
 
     // if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
@@ -201,7 +219,6 @@ export class AppComponent implements OnInit {
     // }
 
     let blockDrawHeight = lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
-    let maxBlockDrawWidthIncludingRoads = roadDrawWidth + maxBlockDrawLength + roadDrawWidth;
     let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / (blockDrawHeight + roadDrawWidth));
     // doesn't include road width but that's OK, we just need a loose upper bound to avoid doing tooo much work
     // let buildingsThatFitHorizontallyInCanvas = Math.ceil(ctxPerspectiveCanvasWidth / lotDrawWidth);
@@ -222,20 +239,39 @@ export class AppComponent implements OnInit {
       ctx.save();
       for (let currentBlock = 1; currentBlock <= blocksThatFitHorizontallyIntoCanvas; currentBlock++) {
         ctx.translate(roadDrawWidth, 0);
-        
+
+        ctx.save();
+        // draw sidewalks
+        ctx.fillStyle = SidewalkColour;
+        ctx.fillRect(0, 0, sidewalkDrawWidth, sidewalkDrawWidth + blockDrawHeight);
+        ctx.fillRect(0, 0, sidewalkDrawWidth + blockDrawLength, sidewalkDrawWidth);
+
+        ctx.translate(sidewalkDrawWidth, sidewalkDrawWidth);
+
         if (includeParks && (currentBlock + i) % oneParkPerThisManyHousingBlocks === 0) {
           ctx.fillStyle = ParkColour;
           ctx.fillRect(0, 0, blockDrawLength, blockDrawHeight);
         } else {
           this.drawBlockOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, lanewayDrawWidth);
         }
-        
+        ctx.restore();
 
-        ctx.translate(blockDrawLength, 0);
+        ctx.translate(blockDrawLength + sidewalkDrawWidth, 0);
+        ctx.fillStyle = SidewalkColour;
+        ctx.fillRect(0, 0, sidewalkDrawWidth, sidewalkDrawWidth + blockDrawHeight);
+        ctx.translate(sidewalkDrawWidth, 0);
+        
+        ctx.save();
+
+        ctx.translate(0, sidewalkDrawWidth + blockDrawHeight);
+
+        ctx.fillRect(0, 0, - (sidewalkDrawWidth + blockDrawLength + sidewalkDrawWidth), sidewalkDrawWidth);
+
+        ctx.restore();
       }
       ctx.restore();
 
-      ctx.translate(0, lotDrawDepth + lanewayDrawWidth + lotDrawDepth);
+      ctx.translate(0, blockDrawHeight + 2 * sidewalkDrawWidth);
     }
 
     // clean up
@@ -301,6 +337,6 @@ export class AppComponent implements OnInit {
 
   // Scale things so the defaults look good. Someday maybe we could determine this dynamically
   scaleRealUnitForCanvas(metres: number, currContextCanvasHeight: number): number {
-    return metres * 2.42;
+    return metres * 2.07;
   }
 }

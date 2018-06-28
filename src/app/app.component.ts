@@ -132,9 +132,7 @@ export class AppComponent implements OnInit {
     const blockAreaSidewalkOnlyInSqM = 
     this.calculateBlockAreaSidewalkOnlyInSqM(sidewalkWidthInM, maxNumOfAdjacentLots, lotWidthInM, lotDepthInM, lanewayWidthInM, blockAreaPrivateLandOnlyInSqM);
 
-    const bldgDepthInM = this.calculateBldgDepth(lotDepthInM, frontYardPercent, backYardPercent);
-    const bldgWidthInM = this.calculateBldgWidth(lotWidthInM, sideYardPercent);
-    const bldgLandArea = bldgDepthInM * bldgWidthInM;
+    const bldgLandArea = this.calculateLandAreaUnderBuildingInSqM(lotDepthInM, frontYardPercent, backYardPercent, lotWidthInM, sideYardPercent);
     const blockAreaLandWithBuildingsOnItInSqM = lotsInBlock * bldgLandArea;
     
     const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
@@ -177,11 +175,19 @@ export class AppComponent implements OnInit {
     this.lotsIn1SqKm = (1000000 / calculatedTotalAreaInSqM) * lotsInBlock * (numOfBlocks - numOfParkBlocks);
   }
 
-  private calculateBlockAreaSidewalkOnlyInSqM(sidewalkWidthInM: number, maxNumOfAdjacentLots: number, lotWidthInM: number, lotDepthInM: number, 
+  private calculateLandAreaUnderBuildingInSqM(lotDepthInM: number, frontYardPercent: number, backYardPercent: number, lotWidthInM: number, sideYardPercent: number) {
+    const bldgDepthInM = this.calculateBldgDepth(lotDepthInM, frontYardPercent, backYardPercent);
+    const bldgWidthInM = this.calculateBldgWidth(lotWidthInM, sideYardPercent);
+    return bldgDepthInM * bldgWidthInM;
+  }
+
+  private calculateBlockAreaSidewalkOnlyInSqM(sidewalkWidthInM: number, maxNumOfAdjacentLots: number, lotWidthInM: number, lotDepthInM: number,
     lanewayWidthInM: number, blockAreaPrivateLandOnlyInSqM: number) {
-    return (sidewalkWidthInM + maxNumOfAdjacentLots * lotWidthInM + sidewalkWidthInM) * (2 * sidewalkWidthInM + 2 * lotDepthInM + lanewayWidthInM) // whole lock from sidewalks inward
-      - blockAreaPrivateLandOnlyInSqM // private lots
-      - (maxNumOfAdjacentLots * lotWidthInM) * lanewayWidthInM; // laneway
+    const blockWidth = (sidewalkWidthInM + maxNumOfAdjacentLots * lotWidthInM + sidewalkWidthInM);
+    const blockHeight = (2 * sidewalkWidthInM + 2 * lotDepthInM + lanewayWidthInM);
+    const totalBlockArea = blockWidth * blockHeight; // whole block from sidewalks inward
+    const lanewayArea = (maxNumOfAdjacentLots * lotWidthInM) * lanewayWidthInM;
+    return totalBlockArea - blockAreaPrivateLandOnlyInSqM - lanewayArea; 
   }
 
   // assume sidewalk surrounds entire block, even at laneway entrance

@@ -117,26 +117,20 @@ export class AppComponent implements OnInit {
     | |_______________|
     
     */
-    let blockWidthInM = roadWidthInM;
     let maxNumOfAdjacentLots = Math.floor(maxBlockLengthInM / lotWidthInM);
-    blockWidthInM += maxNumOfAdjacentLots * lotWidthInM + 2 * sidewalkWidthInM;
-    
-    let blockDepthInM = roadWidthInM;
-    blockDepthInM += lotDepthInM + lanewayWidthInM + lotDepthInM + 2 * sidewalkWidthInM;
+    let blockWidthInM = this.calculateBlockWidthInM(roadWidthInM, maxNumOfAdjacentLots, lotWidthInM, sidewalkWidthInM);
+    let blockDepthInM = this.calculateBlockDepthInM(roadWidthInM, lotDepthInM, lanewayWidthInM, sidewalkWidthInM);
     
     const totalBlockAreaInSqM = blockDepthInM * blockWidthInM;
-    const blockAreaRoadsOnlyInSqM = (blockDepthInM * roadWidthInM) +
-      (maxNumOfAdjacentLots * lotWidthInM + 2 * sidewalkWidthInM) * roadWidthInM + 
-      (maxNumOfAdjacentLots * lotWidthInM ) * lanewayWidthInM; // assume sidewalk surrounds entire block, even at laneway entrance
+    const blockAreaRoadsOnlyInSqM = this.calculateBlockAreaRoadsOnlyInSqM(blockDepthInM, roadWidthInM, maxNumOfAdjacentLots, 
+      lotWidthInM, sidewalkWidthInM, lanewayWidthInM);
     
     const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row of houses on each side of the laneway
 
     const blockAreaPrivateLandOnlyInSqM = lotsInBlock * lotDepthInM * lotWidthInM;
 
     const blockAreaSidewalkOnlyInSqM = 
-    (sidewalkWidthInM + maxNumOfAdjacentLots * lotWidthInM + sidewalkWidthInM) * ( 2 * sidewalkWidthInM + 2 * lotDepthInM + lanewayWidthInM) // whole lock from sidewalks inward
-    - blockAreaPrivateLandOnlyInSqM // private lots
-    - (maxNumOfAdjacentLots * lotWidthInM) * lanewayWidthInM; // laneway
+    this.calculateBlockAreaSidewalkOnlyInSqM(sidewalkWidthInM, maxNumOfAdjacentLots, lotWidthInM, lotDepthInM, lanewayWidthInM, blockAreaPrivateLandOnlyInSqM);
 
     const bldgDepthInM = this.calculateBldgDepth(lotDepthInM, frontYardPercent, backYardPercent);
     const bldgWidthInM = this.calculateBldgWidth(lotWidthInM, sideYardPercent);
@@ -181,6 +175,33 @@ export class AppComponent implements OnInit {
     // scale block to 1km
     this.floorSpaceIn1SqKm = (1000000 / calculatedTotalAreaInSqM) * floorSpaceInSqM;
     this.lotsIn1SqKm = (1000000 / calculatedTotalAreaInSqM) * lotsInBlock * (numOfBlocks - numOfParkBlocks);
+  }
+
+  private calculateBlockAreaSidewalkOnlyInSqM(sidewalkWidthInM: number, maxNumOfAdjacentLots: number, lotWidthInM: number, lotDepthInM: number, 
+    lanewayWidthInM: number, blockAreaPrivateLandOnlyInSqM: number) {
+    return (sidewalkWidthInM + maxNumOfAdjacentLots * lotWidthInM + sidewalkWidthInM) * (2 * sidewalkWidthInM + 2 * lotDepthInM + lanewayWidthInM) // whole lock from sidewalks inward
+      - blockAreaPrivateLandOnlyInSqM // private lots
+      - (maxNumOfAdjacentLots * lotWidthInM) * lanewayWidthInM; // laneway
+  }
+
+  // assume sidewalk surrounds entire block, even at laneway entrance
+  private calculateBlockAreaRoadsOnlyInSqM(blockDepthInM: number, roadWidthInM: number, maxNumOfAdjacentLots: number, lotWidthInM: number, sidewalkWidthInM: number, lanewayWidthInM: number) {
+    return (blockDepthInM * roadWidthInM) +
+      (maxNumOfAdjacentLots * lotWidthInM + 2 * sidewalkWidthInM) * roadWidthInM +
+      (maxNumOfAdjacentLots * lotWidthInM) * lanewayWidthInM;
+  }
+
+  private calculateBlockDepthInM(roadWidthInM: number, lotDepthInM: number, lanewayWidthInM: number, sidewalkWidthInM: number) {
+    let result = roadWidthInM;
+    result += lotDepthInM + lanewayWidthInM + lotDepthInM + 2 * sidewalkWidthInM;
+    return result;
+  }
+
+  private calculateBlockWidthInM(roadWidthInM: number, maxNumOfAdjacentLots: number, lotWidthInM: number, sidewalkWidthInM: number) {
+    let result = roadWidthInM;
+    result += maxNumOfAdjacentLots * lotWidthInM;
+    result += 2 * sidewalkWidthInM;
+    return result;
   }
 
   drawCanvas(lotDepthInM: number, lotWidthInM: number,

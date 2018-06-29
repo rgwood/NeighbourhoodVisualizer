@@ -21,7 +21,13 @@ class VisualizerParameters {
   maxBlockLengthInM: number;
   includeParks: boolean;
   oneParkPerThisManyHousingBlocks: number;
+}
 
+class BlockAreaByLandUse {
+  roadAreaInSqM: number; 
+  yardAreaInSqm: number; 
+  builtLandAreaInSqm: number; 
+  sidewalkAreaInSqM: number;
 }
 
 @Component({
@@ -125,35 +131,25 @@ export class AppComponent implements OnInit {
     | |_______________|
     
     */
-    let maxNumOfAdjacentLots = Math.floor(params.maxBlockLengthInM / params.lotWidthInM);
-    let blockWidthInM = this.calculateBlockWidthInM(params, maxNumOfAdjacentLots);
+    let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
+    let lotsInBlock = this.getNumberOfLotsPerBlock(params);
+    let blockWidthInM = this.calculateBlockWidthInM(params);
     let blockDepthInM = this.calculateBlockDepthInM(params);
-    
-    const blockAreaRoadsOnlyInSqM = this.calculateBlockAreaRoadsOnlyInSqM(params, maxNumOfAdjacentLots, blockDepthInM);
-    
-    const lotsInBlock = 2 * maxNumOfAdjacentLots; // a row of houses on each side of the laneway
 
-    const blockAreaPrivateLandOnlyInSqM = lotsInBlock * params.lotDepthInM * params.lotWidthInM;
+    let singleBlockAreaByLandUse = this.calculateBlockAreaByLandUse(params);
 
-    const blockAreaSidewalkOnlyInSqM = this.calculateBlockAreaSidewalkOnlyInSqM(params, maxNumOfAdjacentLots, blockAreaPrivateLandOnlyInSqM );
-
-    const bldgLandArea = this.calculateLandAreaUnderBuildingInSqM(params);
-    const blockAreaLandWithBuildingsOnItInSqM = lotsInBlock * bldgLandArea;
-    
-    const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
-    const totalFloorSpaceInBlockInSqM = blockAreaLandWithBuildingsOnItInSqM * params.storeys;
-    
-    this.bldgArea = bldgLandArea;
+    const totalFloorSpaceInBlockInSqM = singleBlockAreaByLandUse.builtLandAreaInSqm * params.storeys;
     
     // look at X blocks, one of which might be a park
     let numOfBlocks = params.oneParkPerThisManyHousingBlocks;
     let numOfParkBlocks = params.includeParks ? 1 : 0;
+    let numOfHousingBlocks = numOfBlocks - numOfParkBlocks;
 
-    let floorSpaceInSqM = totalFloorSpaceInBlockInSqM * (numOfBlocks - numOfParkBlocks); 
-    let roadAreaInSqM = blockAreaRoadsOnlyInSqM * (numOfBlocks - numOfParkBlocks);
-    let yardAreaInSqM = blockAreaYardsOnlyInSqM * (numOfBlocks - numOfParkBlocks);
-    let buildingAreaInSqM = blockAreaLandWithBuildingsOnItInSqM * (numOfBlocks - numOfParkBlocks);
-    let sidewalkAreaInSqM = blockAreaSidewalkOnlyInSqM * numOfBlocks;
+    let floorSpaceInSqM = totalFloorSpaceInBlockInSqM * numOfHousingBlocks; 
+    let roadAreaInSqM = singleBlockAreaByLandUse.roadAreaInSqM * numOfHousingBlocks;
+    let yardAreaInSqM = singleBlockAreaByLandUse.yardAreaInSqm * numOfHousingBlocks;
+    let buildingAreaInSqM = singleBlockAreaByLandUse.builtLandAreaInSqm * numOfHousingBlocks;
+    let sidewalkAreaInSqM = singleBlockAreaByLandUse.sidewalkAreaInSqM * numOfBlocks;
     
     let parkWidthInM = maxNumOfAdjacentLots * params.lotWidthInM;
     let parkDepthInM = params.lotDepthInM + params.lanewayWidthInM + params.lotDepthInM;
@@ -169,6 +165,8 @@ export class AppComponent implements OnInit {
       throw new Error(`ALERT ALERT. expectedArea=${expectedTotalAreaInSqM}, calculatedArea=${calculatedTotalAreaInSqM}`);
     }
 
+    this.bldgArea = this.calculateLandAreaUnderBuildingInSqM(params);
+
     this.yardRatio = yardAreaInSqM / calculatedTotalAreaInSqM;
     this.roadRatio = roadAreaInSqM / calculatedTotalAreaInSqM;
     this.parkRatio = parkAreaInSqM / calculatedTotalAreaInSqM;
@@ -180,13 +178,38 @@ export class AppComponent implements OnInit {
     this.lotsIn1SqKm = (1000000 / calculatedTotalAreaInSqM) * lotsInBlock * (numOfBlocks - numOfParkBlocks);
   }
 
+  private getNumberOfLotsPerBlock(params: VisualizerParameters) {
+    let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
+    return 2 * maxNumOfAdjacentLots; // a row of houses on each side of the laneway
+  }
+
+  private getMaxNumOfAdjacentLots(params: VisualizerParameters) {
+    return Math.floor(params.maxBlockLengthInM / params.lotWidthInM);
+  }
+
+  private calculateBlockAreaByLandUse(params: VisualizerParameters) {
+    const lotsPerBlock = this.getNumberOfLotsPerBlock(params);
+    const blockAreaRoadsOnlyInSqM = this.calculateBlockAreaRoadsOnlyInSqM(params);
+    const blockAreaPrivateLandOnlyInSqM = lotsPerBlock * params.lotDepthInM * params.lotWidthInM;
+    const blockAreaSidewalkOnlyInSqM = this.calculateBlockAreaSidewalkOnlyInSqM(params, blockAreaPrivateLandOnlyInSqM);
+    const blockAreaLandWithBuildingsOnItInSqM = lotsPerBlock * this.calculateLandAreaUnderBuildingInSqM(params);
+    const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
+    let blockArea = new BlockAreaByLandUse();
+    blockArea.builtLandAreaInSqm = blockAreaLandWithBuildingsOnItInSqM;
+    blockArea.roadAreaInSqM = blockAreaRoadsOnlyInSqM;
+    blockArea.sidewalkAreaInSqM = blockAreaSidewalkOnlyInSqM;
+    blockArea.yardAreaInSqm = blockAreaYardsOnlyInSqM;
+    return blockArea;
+  }
+
   private calculateLandAreaUnderBuildingInSqM(params: VisualizerParameters) {
     const bldgDepthInM = this.calculateBldgDepth(params.lotDepthInM, params.frontYardPercent, params.backYardPercent);
     const bldgWidthInM = this.calculateBldgWidth(params.lotWidthInM, params.sideYardPercent);
     return bldgDepthInM * bldgWidthInM;
   }
 
-  private calculateBlockAreaSidewalkOnlyInSqM(params: VisualizerParameters, maxNumOfAdjacentLots: number, blockAreaPrivateLandOnlyInSqM: number) {
+  private calculateBlockAreaSidewalkOnlyInSqM(params: VisualizerParameters, blockAreaPrivateLandOnlyInSqM: number) {
+    let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
     const blockWidth = (params.sidewalkWidthInM + maxNumOfAdjacentLots * params.lotWidthInM + params.sidewalkWidthInM);
     const blockHeight = (2 * params.sidewalkWidthInM + 2 * params.lotDepthInM + params.lanewayWidthInM);
     const totalBlockArea = blockWidth * blockHeight; // whole block from sidewalks inward
@@ -195,8 +218,9 @@ export class AppComponent implements OnInit {
   }
 
   // assume sidewalk surrounds entire block, even at laneway entrance
-  private calculateBlockAreaRoadsOnlyInSqM(params: VisualizerParameters, maxNumOfAdjacentLots: number, blockDepthInM: number) {
-    return (blockDepthInM * params.roadWidthInM) +
+  private calculateBlockAreaRoadsOnlyInSqM(params: VisualizerParameters) {
+    let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
+    return (this.calculateBlockDepthInM(params) * params.roadWidthInM) +
       (maxNumOfAdjacentLots * params.lotWidthInM + 2 * params.sidewalkWidthInM) * params.roadWidthInM +
       (maxNumOfAdjacentLots * params.lotWidthInM) * params.lanewayWidthInM;
   }
@@ -207,9 +231,9 @@ export class AppComponent implements OnInit {
     return result;
   }
 
-  private calculateBlockWidthInM(params: VisualizerParameters, maxNumOfAdjacentLots: number) {
+  private calculateBlockWidthInM(params: VisualizerParameters) {
     let result = params.roadWidthInM;
-    result += maxNumOfAdjacentLots * params.lotWidthInM;
+    result += this.getMaxNumOfAdjacentLots(params) * params.lotWidthInM;
     result += 2 * params.sidewalkWidthInM;
     return result;
   }

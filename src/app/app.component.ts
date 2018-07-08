@@ -6,7 +6,7 @@ const YardColour = 'rgb(240, 240, 240)';
 const RoadColour = 'rgb(84, 84, 84)';
 const ParkColour = 'rgb(57,178,30)';
 const SidewalkColour = 'rgb(209,209,209)';
-// const MetresPerFoot = 0.3048;
+const MaxBuildingsToDraw = 10000;
 
 class VisualizerParameters {
   frontYardPercent: number;
@@ -131,10 +131,6 @@ export class AppComponent implements OnInit {
     | |_______________|
     
     */
-    let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
-    let lotsInBlock = this.getNumberOfLotsPerBlock(params);
-    let blockWidthInM = this.calculateBlockWidthInM(params);
-    let blockDepthInM = this.calculateBlockDepthInM(params);
 
     let singleBlockAreaByLandUse = this.calculateBlockAreaByLandUse(params);
 
@@ -151,6 +147,11 @@ export class AppComponent implements OnInit {
     let buildingAreaInSqM = singleBlockAreaByLandUse.builtLandAreaInSqm * numOfHousingBlocks;
     let sidewalkAreaInSqM = singleBlockAreaByLandUse.sidewalkAreaInSqM * numOfBlocks;
     
+    let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
+    let lotsInBlock = this.getNumberOfLotsPerBlock(params);
+    let blockWidthInM = this.calculateBlockWidthInM(params);
+    let blockDepthInM = this.calculateBlockDepthInM(params);
+    
     let parkWidthInM = maxNumOfAdjacentLots * params.lotWidthInM;
     let parkDepthInM = params.lotDepthInM + params.lanewayWidthInM + params.lotDepthInM;
     let parkAreaInSqM = parkWidthInM * parkDepthInM * numOfParkBlocks;
@@ -165,7 +166,7 @@ export class AppComponent implements OnInit {
       throw new Error(`ALERT ALERT. expectedArea=${expectedTotalAreaInSqM}, calculatedArea=${calculatedTotalAreaInSqM}`);
     }
 
-    this.bldgArea = this.calculateLandAreaUnderBuildingInSqM(params);
+    this.bldgArea = this.calculateLandAreaUnder1BuildingInSqM(params);
 
     this.yardRatio = yardAreaInSqM / calculatedTotalAreaInSqM;
     this.roadRatio = roadAreaInSqM / calculatedTotalAreaInSqM;
@@ -192,7 +193,7 @@ export class AppComponent implements OnInit {
     const blockAreaRoadsOnlyInSqM = this.calculateBlockAreaRoadsOnlyInSqM(params);
     const blockAreaPrivateLandOnlyInSqM = lotsPerBlock * params.lotDepthInM * params.lotWidthInM;
     const blockAreaSidewalkOnlyInSqM = this.calculateBlockAreaSidewalkOnlyInSqM(params, blockAreaPrivateLandOnlyInSqM);
-    const blockAreaLandWithBuildingsOnItInSqM = lotsPerBlock * this.calculateLandAreaUnderBuildingInSqM(params);
+    const blockAreaLandWithBuildingsOnItInSqM = lotsPerBlock * this.calculateLandAreaUnder1BuildingInSqM(params);
     const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
     let blockArea = new BlockAreaByLandUse();
     blockArea.builtLandAreaInSqm = blockAreaLandWithBuildingsOnItInSqM;
@@ -202,7 +203,7 @@ export class AppComponent implements OnInit {
     return blockArea;
   }
 
-  private calculateLandAreaUnderBuildingInSqM(params: VisualizerParameters) {
+  private calculateLandAreaUnder1BuildingInSqM(params: VisualizerParameters) {
     const bldgDepthInM = this.calculateBldgDepth(params.lotDepthInM, params.frontYardPercent, params.backYardPercent);
     const bldgWidthInM = this.calculateBldgWidth(params.lotWidthInM, params.sideYardPercent);
     return bldgDepthInM * bldgWidthInM;
@@ -248,9 +249,7 @@ export class AppComponent implements OnInit {
 
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // draw background
-    ctx.fillStyle = RoadColour;
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drawBackground(ctx);
 
     let ctxPerspectiveCanvasHeight, ctxPerspectiveCanvasWidth;
 
@@ -277,13 +276,7 @@ export class AppComponent implements OnInit {
     // upper bound to avoid doing tooo much work
     let blocksThatFitHorizontallyIntoCanvas = Math.ceil(ctxPerspectiveCanvasWidth / (blockDrawLength));
 
-    const MaxBuildingsToDraw = 10000;
-    let expectedBuildingsToDraw = blocksThatFitVerticallyInCanvas * blocksThatFitHorizontallyIntoCanvas * buildingsPerBlockOnSingleStreet * 2;
-    if (expectedBuildingsToDraw > MaxBuildingsToDraw) {
-      // todo: how do I throw a regular exception?
-      // i.e. new Exception(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`)
-      throw new DOMException();
-    }
+    this.throwErrorIfAboutToDrawTooManyBuildings(blocksThatFitVerticallyInCanvas, blocksThatFitHorizontallyIntoCanvas, buildingsPerBlockOnSingleStreet);
 
     for (let i = 0; i < blocksThatFitVerticallyInCanvas; i++) {
       ctx.translate(0, roadDrawWidth);
@@ -293,34 +286,21 @@ export class AppComponent implements OnInit {
         ctx.translate(roadDrawWidth, 0);
 
         ctx.save();
-        // draw sidewalks
-        ctx.fillStyle = SidewalkColour;
-        ctx.fillRect(0, 0, sidewalkDrawWidth, sidewalkDrawWidth + blockDrawHeight);
-        ctx.fillRect(0, 0, sidewalkDrawWidth + blockDrawLength, sidewalkDrawWidth);
+        
+        this.drawSidewalks(ctx, sidewalkDrawWidth, blockDrawLength, blockDrawHeight);
 
         ctx.translate(sidewalkDrawWidth, sidewalkDrawWidth);
 
         if (params.includeParks && (currentBlock + i) % params.oneParkPerThisManyHousingBlocks === 0) {
-          ctx.fillStyle = ParkColour;
-          ctx.fillRect(0, 0, blockDrawLength, blockDrawHeight);
+          this.drawParkBlock(ctx, blockDrawLength, blockDrawHeight);
         } else {
-          this.drawBlockOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, params.frontYardPercent, 
-            params.sideYardPercent, params.backYardPercent, lanewayDrawWidth);
+          this.drawBlockOfBuildings(ctx, params, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, lanewayDrawWidth);
         }
-        ctx.restore();
-
-        ctx.translate(blockDrawLength + sidewalkDrawWidth, 0);
-        ctx.fillStyle = SidewalkColour;
-        ctx.fillRect(0, 0, sidewalkDrawWidth, sidewalkDrawWidth + blockDrawHeight);
-        ctx.translate(sidewalkDrawWidth, 0);
-        
-        ctx.save();
-
-        ctx.translate(0, sidewalkDrawWidth + blockDrawHeight);
-
-        ctx.fillRect(0, 0, - (sidewalkDrawWidth + blockDrawLength + sidewalkDrawWidth), sidewalkDrawWidth);
 
         ctx.restore();
+
+        ctx.translate(blockDrawLength + sidewalkDrawWidth * 2, 0);
+
       }
       ctx.restore();
 
@@ -331,29 +311,64 @@ export class AppComponent implements OnInit {
     ctx.restore();
   }
 
-  private drawBlockOfBuildings(ctx: CanvasRenderingContext2D, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number, 
-    lotDrawDepth: number, frontYardPercent: number, sideYardPercent: number, backYardPercent: number, lanewayDrawWidth: number) {
+  private drawSidewalks(ctx: CanvasRenderingContext2D, sidewalkDrawWidth: number, blockDrawLength: number, blockDrawHeight: number) {
+    ctx.fillStyle = SidewalkColour;
+    ctx.fillRect(0, 0, 2 * sidewalkDrawWidth + blockDrawLength, 2 * sidewalkDrawWidth + blockDrawHeight);
+  }
+
+  private drawParkBlock(ctx: CanvasRenderingContext2D, blockDrawLength: number, blockDrawHeight: number) {
+    ctx.fillStyle = ParkColour;
+    ctx.fillRect(0, 0, blockDrawLength, blockDrawHeight);
+  }
+
+  private throwErrorIfAboutToDrawTooManyBuildings(blocksThatFitVerticallyInCanvas: number, blocksThatFitHorizontallyIntoCanvas: number, buildingsPerBlockOnSingleStreet: number) {
+    let expectedBuildingsToDraw = blocksThatFitVerticallyInCanvas * blocksThatFitHorizontallyIntoCanvas * buildingsPerBlockOnSingleStreet * 2;
+    if (expectedBuildingsToDraw > MaxBuildingsToDraw) {
+      // todo: how do I throw a regular exception?
+      // i.e. new Exception(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`)
+      throw new DOMException();
+    }
+  }
+
+  private drawBackground(ctx: CanvasRenderingContext2D) {
+    ctx.fillStyle = RoadColour;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+  }
+
+  private drawBlockOfBuildings(ctx: CanvasRenderingContext2D, params: VisualizerParameters, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number, 
+    lotDrawDepth: number, lanewayDrawWidth: number) {
     ctx.save();
-    this.drawRowOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, true);
+    this.drawRowOfBuildings(ctx, params, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, true);
     ctx.restore();
+
+    this.drawLaneway(ctx, lotDrawDepth, lotDrawWidth, buildingsPerBlockOnSingleStreet, lanewayDrawWidth);
+
     ctx.save();
+
     ctx.translate(0, lotDrawDepth + lanewayDrawWidth);
-    this.drawRowOfBuildings(ctx, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, false);
+    this.drawRowOfBuildings(ctx, params, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, false);
     ctx.restore();
   }
 
-  private drawRowOfBuildings(ctx: CanvasRenderingContext2D, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number,
-    lotDrawDepth: number, frontYardPercent: number, sideYardPercent: number, backYardPercent: number, ctxIsAtRoad: boolean) {
+  private drawLaneway(ctx: CanvasRenderingContext2D, lotDrawDepth: number, lotDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lanewayDrawWidth: number) {
+    ctx.save();
+    ctx.fillStyle = RoadColour;
+    ctx.translate(0, lotDrawDepth);
+    ctx.fillRect(0, 0, lotDrawWidth * buildingsPerBlockOnSingleStreet, lanewayDrawWidth);
+    ctx.restore();
+  }
+
+  private drawRowOfBuildings(ctx: CanvasRenderingContext2D, params: VisualizerParameters, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number,
+    lotDrawDepth: number, ctxIsAtRoad: boolean) {
     let yOffsetFromBlockStart = 0;
     // draw a row of buildings
     for (let j = 0; j < buildingsPerBlockOnSingleStreet; j++) {
-      this.drawBuilding(ctx, lotDrawWidth, lotDrawDepth, frontYardPercent, sideYardPercent, backYardPercent, !ctxIsAtRoad);
+      this.drawBuilding(ctx, params, lotDrawWidth, lotDrawDepth, !ctxIsAtRoad);
       ctx.translate(lotDrawWidth, 0);
     }
   }
 
-  drawBuilding(ctx: CanvasRenderingContext2D, lotDrawWidth: number, lotDrawDepth: number,
-    frontYardPercent: number, sideYardPercent: number, backYardPercent: number, flipVertically: boolean): void {
+  drawBuilding(ctx: CanvasRenderingContext2D, params: VisualizerParameters, lotDrawWidth: number, lotDrawDepth: number, flipVertically: boolean): void {
     ctx.save();
 
     if (flipVertically) {
@@ -366,11 +381,11 @@ export class AppComponent implements OnInit {
     ctx.fillStyle = YardColour;
     ctx.fillRect(1, 1, lotDrawWidth - 2, lotDrawDepth - 2);
 
-    const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth, frontYardPercent, backYardPercent);
-    const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth, sideYardPercent);
+    const bldgDrawDepth = this.calculateBldgDepth(lotDrawDepth, params.frontYardPercent, params.backYardPercent);
+    const bldgDrawWidth = this.calculateBldgWidth(lotDrawWidth, params.sideYardPercent);
 
-    const frontYardDrawDepth = lotDrawDepth * frontYardPercent / 100;
-    const sideyardDrawDepth = lotDrawWidth * sideYardPercent / 100;
+    const frontYardDrawDepth = lotDrawDepth * params.frontYardPercent / 100;
+    const sideyardDrawDepth = lotDrawWidth * params.sideYardPercent / 100;
 
     ctx.fillStyle = BuildingColour;
     ctx.fillRect(sideyardDrawDepth,

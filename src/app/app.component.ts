@@ -263,17 +263,9 @@ export class AppComponent implements OnInit {
     let sidewalkDrawWidth = this.scaleRealUnitForCanvas(params.sidewalkWidthInM, ctxPerspectiveCanvasHeight);
     let blockDrawLength = this.scaleRealUnitForCanvas(blockLengthInM, ctxPerspectiveCanvasHeight);
 
-    // if (lotDrawWidth > ctxPerspectiveCanvasWidth) {
-    //   const scalingFactor = ctxPerspectiveCanvasWidth / lotDrawWidth;
-    //   lotDrawDepth *= scalingFactor;
-    //   lotDrawWidth *= scalingFactor;
-    // }
-
     let blockDrawHeight = lotDrawDepth + lanewayDrawWidth + lotDrawDepth;
     let blocksThatFitVerticallyInCanvas = Math.ceil(ctxPerspectiveCanvasHeight / (blockDrawHeight + roadDrawWidth));
     // doesn't include road width but that's OK, we just need a loose upper bound to avoid doing tooo much work
-    // let buildingsThatFitHorizontallyInCanvas = Math.ceil(ctxPerspectiveCanvasWidth / lotDrawWidth);
-    // upper bound to avoid doing tooo much work
     let blocksThatFitHorizontallyIntoCanvas = Math.ceil(ctxPerspectiveCanvasWidth / (blockDrawLength));
 
     this.throwErrorIfAboutToDrawTooManyBuildings(blocksThatFitVerticallyInCanvas, blocksThatFitHorizontallyIntoCanvas, buildingsPerBlockOnSingleStreet);

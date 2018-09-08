@@ -108,23 +108,28 @@ export class AppComponent implements OnInit {
     if (location.search.startsWith('?')) {
       let queryParams: any = qs.parse(location.search.substring(1));
 
-      config.lotWidth = [Number(queryParams.lotWidthInM)] || config.lotWidth;
-      config.lotDepth = [Number(queryParams.lotDepthInM)] || config.lotDepth;
-      config.frontYardPercent = [Number(queryParams.frontYardPercent)] || config.frontYardPercent;
-      config.sideYardPercent = [Number(queryParams.sideYardPercent)] || config.sideYardPercent;
-      config.backYardPercent = [Number(queryParams.backYardPercent)] || config.backYardPercent;
-      config.storeys = [Number(queryParams.storeys)] || config.storeys;
-      config.averageUnitSizeInSqM = [Number(queryParams.averageUnitSizeInSqM)] || config.averageUnitSizeInSqM;
-      config.roadWidthInM = [Number(queryParams.roadWidthInM)] || config.roadWidthInM;
-      config.sidewalkWidthInM = [Number(queryParams.sidewalkWidthInM)] || config.sidewalkWidthInM;
-      config.lanewayWidthInM = [Number(queryParams.lanewayWidthInM)] || config.lanewayWidthInM;
-      config.maxBlockLengthInM = [Number(queryParams.maxBlockLengthInM)] || config.maxBlockLengthInM;
+      let tryParseNumber = function(queryParam, fallback) {
+        let parsed = Number(queryParam);
+        return !!parsed ? [parsed] : fallback;
+      };
+
+      config.lotWidth = tryParseNumber(queryParams.lotWidthInM, config.lotWidth);
+      config.lotDepth = tryParseNumber(queryParams.lotDepthInM, config.lotDepth);
+      config.frontYardPercent = tryParseNumber(queryParams.frontYardPercent, config.frontYardPercent);
+      config.sideYardPercent = tryParseNumber(queryParams.sideYardPercent, config.sideYardPercent);
+      config.backYardPercent = tryParseNumber(queryParams.backYardPercent, config.backYardPercent);
+      config.storeys = tryParseNumber(queryParams.storeys, config.storeys);
+      config.averageUnitSizeInSqM = tryParseNumber(queryParams.averageUnitSizeInSqM, config.averageUnitSizeInSqM);
+      config.roadWidthInM = tryParseNumber(queryParams.roadWidthInM, config.roadWidthInM);
+      config.sidewalkWidthInM = tryParseNumber(queryParams.sidewalkWidthInM, config.sidewalkWidthInM);
+      config.lanewayWidthInM = tryParseNumber(queryParams.lanewayWidthInM, config.lanewayWidthInM);
+      config.maxBlockLengthInM = tryParseNumber(queryParams.maxBlockLengthInM, config.maxBlockLengthInM);
       
       if (!!queryParams.includeParks) {
         config.includeParks = [queryParams.includeParks.toLowerCase() === 'true'];
       }
 
-      config.oneParkPerThisManyHousingBlocks = [Number(queryParams.oneParkPerThisManyHousingBlocks)] || config.oneParkPerThisManyHousingBlocks;
+      config.oneParkPerThisManyHousingBlocks = tryParseNumber(queryParams.oneParkPerThisManyHousingBlocks, config.oneParkPerThisManyHousingBlocks);
     } 
     this.inputForm = this.fb.group(config);
   }

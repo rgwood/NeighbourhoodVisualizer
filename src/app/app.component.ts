@@ -109,6 +109,10 @@ export class AppComponent implements OnInit {
       let queryParams: any = qs.parse(location.search.substring(1));
 
       let tryParseNumber = function(queryParam, fallback) {
+        // special case because 0 will not evaluate to truthy, and thus the code below will use the fallback...
+        if (queryParam === '0') {
+          return 0;
+        }
         let parsed = Number(queryParam);
         return !!parsed ? [parsed] : fallback;
       };

@@ -50,6 +50,8 @@
                   of floor space per lot.
                 </p>
           </div>
+          <div [hidden]="inputForm.valid ">Parameters not valid, please try adjusting or resetting them. 
+            This often occurs when the maximum block size is too small for a single lot.</div>
         </div>
       </div>
     </div>

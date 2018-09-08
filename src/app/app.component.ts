@@ -1,5 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormControl, FormBuilder, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { debounce, takeUntil } from 'rxjs/operators';
+import { timer, Subject } from 'rxjs';
+import * as qs from 'qs';
 
 const BuildingColour = 'rgb(0, 82, 110)';
 const YardColour = 'rgb(240, 240, 240)';
@@ -50,11 +54,11 @@ export class AppComponent implements OnInit {
   defaultInputConfig = {
     lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
     lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
-    frontYardPercent: 20,
-    sideYardPercent: 10,
-    backYardPercent: 45,
+    frontYardPercent: [20],
+    sideYardPercent: [10],
+    backYardPercent: [45],
     storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
-    averageUnitSizeInSqM: 100,
+    averageUnitSizeInSqM: [100],
     roadWidthInM: [11, [Validators.required, Validators.min(0), Validators.max(30)]],
     sidewalkWidthInM: [8, [Validators.required, Validators.min(0), Validators.max(30)]],
     lanewayWidthInM: [6, [Validators.required, Validators.min(0), Validators.max(30)]],
@@ -64,47 +68,107 @@ export class AppComponent implements OnInit {
     oneParkPerThisManyHousingBlocks: [4, [Validators.min(2), Validators.max(20)]]
   };
 
+  stopSubscriptionsSubject: Subject<void>;
+
   static degreesToRadians(degrees: number) {
     return degrees * Math.PI / 180;
   }
 
-  // <--- inject FormBuilder. Love how TS automatically assigns instance variables from constructor params
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private router: Router) {
+  }
+
+  ngOnInit(): void {
+    this.canvas = document.getElementById('setbackCanvas') as HTMLCanvasElement;
+    this.populateInputFormUsingQueryParamsIfAvailable();
+    this.subscribeToInputFormChanges();
+    this.calculateStatsAndDrawCanvas();
   }
 
   resetForm() {
-    this.canvas = document.getElementById('setbackCanvas') as HTMLCanvasElement;
+    this.cleanUpSubscriptions();
+    this.resetInputForm();
+    this.subscribeToInputFormChanges();
+    this.calculateStatsAndDrawCanvas();
+    this.setURLToMatchParams();
+  }
+
+
+  private cleanUpSubscriptions() {
+    this.stopSubscriptionsSubject.next();
+    this.stopSubscriptionsSubject.complete();
+  }
+
+  private resetInputForm() {
     this.inputForm = this.fb.group(this.defaultInputConfig);
-    this.inputForm.valueChanges.subscribe(val => {
+  }
+
+  private populateInputFormUsingQueryParamsIfAvailable() {
+    let config = Object.assign({}, this.defaultInputConfig);
+
+    if (location.search.startsWith('?')) {
+      let queryParams: any = qs.parse(location.search.substring(1));
+
+      config.lotWidth = [Number(queryParams.lotWidthInM)] || config.lotWidth;
+      config.lotDepth = [Number(queryParams.lotDepthInM)] || config.lotDepth;
+      config.frontYardPercent = [Number(queryParams.frontYardPercent)] || config.frontYardPercent;
+      config.sideYardPercent = [Number(queryParams.sideYardPercent)] || config.sideYardPercent;
+      config.backYardPercent = [Number(queryParams.backYardPercent)] || config.backYardPercent;
+      config.storeys = [Number(queryParams.storeys)] || config.storeys;
+      config.averageUnitSizeInSqM = [Number(queryParams.averageUnitSizeInSqM)] || config.averageUnitSizeInSqM;
+      config.roadWidthInM = [Number(queryParams.roadWidthInM)] || config.roadWidthInM;
+      config.sidewalkWidthInM = [Number(queryParams.sidewalkWidthInM)] || config.sidewalkWidthInM;
+      config.lanewayWidthInM = [Number(queryParams.lanewayWidthInM)] || config.lanewayWidthInM;
+      config.maxBlockLengthInM = [Number(queryParams.maxBlockLengthInM)] || config.maxBlockLengthInM;
+      
+      if (!!queryParams.includeParks) {
+        config.includeParks = [queryParams.includeParks.toLowerCase() === 'true'];
+      }
+
+      config.oneParkPerThisManyHousingBlocks = [Number(queryParams.oneParkPerThisManyHousingBlocks)] || config.oneParkPerThisManyHousingBlocks;
+    } 
+    this.inputForm = this.fb.group(config);
+  }
+
+  private subscribeToInputFormChanges() {
+    this.stopSubscriptionsSubject = new Subject<void>();
+    this.inputForm.valueChanges.pipe(takeUntil(this.stopSubscriptionsSubject)).subscribe(val => {
       if (this.inputForm.valid) {
         this.calculateStatsAndDrawCanvas();
       }
     });
 
-    this.calculateStatsAndDrawCanvas();
+    this.inputForm.valueChanges.pipe(
+      takeUntil(this.stopSubscriptionsSubject),
+      debounce(() => timer(500)))
+      .subscribe(() => {this.setURLToMatchParams();
+    });
   }
 
-  ngOnInit(): void {
-    this.resetForm();
+  private setURLToMatchParams() {
+    this.router.navigate(['.'], { queryParams: this.getStronglyTypedParametersFromForm() });
   }
 
   calculateStatsAndDrawCanvas(): void {
-    let parameters = new VisualizerParameters();
-    parameters.frontYardPercent = this.inputForm.get('frontYardPercent').value;
-    parameters.sideYardPercent = this.inputForm.get('sideYardPercent').value;
-    parameters.backYardPercent = this.inputForm.get('backYardPercent').value;
-    parameters.lotDepthInM = Number(this.inputForm.get('lotDepth').value);
-    parameters.lotWidthInM = Number(this.inputForm.get('lotWidth').value);
-    parameters.storeys = this.inputForm.get('storeys').value;
-    parameters.roadWidthInM = this.inputForm.get('roadWidthInM').value;
-    parameters.lanewayWidthInM = this.inputForm.get('lanewayWidthInM').value;
-    parameters.sidewalkWidthInM = this.inputForm.get('sidewalkWidthInM').value;
-    parameters.maxBlockLengthInM = this.inputForm.get('maxBlockLengthInM').value;
-    parameters.includeParks = this.inputForm.get('includeParks').value;
-    parameters.oneParkPerThisManyHousingBlocks = this.inputForm.get('oneParkPerThisManyHousingBlocks').value;
-
+    let parameters = this.getStronglyTypedParametersFromForm();
     this.calculateStatistics(parameters);
     this.drawCanvas(parameters);
+  }
+
+  private getStronglyTypedParametersFromForm() {
+    let vp = new VisualizerParameters();
+    vp.frontYardPercent = this.inputForm.get('frontYardPercent').value;
+    vp.sideYardPercent = this.inputForm.get('sideYardPercent').value;
+    vp.backYardPercent = this.inputForm.get('backYardPercent').value;
+    vp.lotDepthInM = Number(this.inputForm.get('lotDepth').value);
+    vp.lotWidthInM = Number(this.inputForm.get('lotWidth').value);
+    vp.storeys = this.inputForm.get('storeys').value;
+    vp.roadWidthInM = this.inputForm.get('roadWidthInM').value;
+    vp.lanewayWidthInM = this.inputForm.get('lanewayWidthInM').value;
+    vp.sidewalkWidthInM = this.inputForm.get('sidewalkWidthInM').value;
+    vp.maxBlockLengthInM = this.inputForm.get('maxBlockLengthInM').value;
+    vp.includeParks = this.inputForm.get('includeParks').value;
+    vp.oneParkPerThisManyHousingBlocks = this.inputForm.get('oneParkPerThisManyHousingBlocks').value;
+    return vp;
   }
 
   // todo: refactor this so it can be tested. What's the best way to return multiple values from a single method in TS?

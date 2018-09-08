@@ -1,13 +1,15 @@
 import { TestBed, async } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 describe('AppComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
         AppComponent
       ],
-      imports: [ReactiveFormsModule]
+      imports: [ReactiveFormsModule],
+      providers: [{provide: Router, useClass: class { navigate = jasmine.createSpy('navigate'); }}]
     }).compileComponents();
   }));
   it('should create the app', async(() => {

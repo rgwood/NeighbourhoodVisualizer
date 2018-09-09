@@ -178,7 +178,7 @@ export class AppComponent implements OnInit {
 
     this.inputForm.valueChanges.pipe(
       takeUntil(this.stopSubscriptionsSubject),
-      debounce(() => timer(500)))
+      debounce(() => timer(250)))
       .subscribe(() => {this.setURLToMatchParams();
     });
   }

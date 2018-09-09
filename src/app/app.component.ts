@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { debounce, takeUntil } from 'rxjs/operators';
 import { timer, Subject } from 'rxjs';
 import * as qs from 'qs';
+import { VisualizerParameters } from './VisualizerParameters';
 
 const BuildingColour = 'rgb(0, 82, 110)';
 const YardColour = 'rgb(240, 240, 240)';
@@ -11,46 +12,22 @@ const RoadColour = 'rgb(84, 84, 84)';
 const ParkColour = 'rgb(57,178,30)';
 const SidewalkColour = 'rgb(209,209,209)';
 const MaxBuildingsToDraw = 10000;
-
-class VisualizerParameters {
-  frontYardPercent: number;
-  sideYardPercent: number;
-  backYardPercent: number;
-  lotDepthInM: number;
-  lotWidthInM: number;
-  storeys: number;
-  roadWidthInM: number;
-  lanewayWidthInM: number;
-  sidewalkWidthInM: number;
-  maxBlockLengthInM: number;
-  includeParks: boolean;
-  oneParkPerThisManyHousingBlocks: number;
-
-  // Same data but with much shorter names, for use in query parameters
-  toQueryParamFormat() {
-    return {
-      fyp: this.frontYardPercent,
-      syp: this.sideYardPercent,
-      byp: this.backYardPercent,
-      lod: this.lotDepthInM,
-      low: this.lotWidthInM,
-      st: this.storeys,
-      rw: this.roadWidthInM,
-      law: this.lanewayWidthInM,
-      sw: this.sidewalkWidthInM,
-      mbl: this.maxBlockLengthInM,
-      ip: this.includeParks,
-      pphb: this.oneParkPerThisManyHousingBlocks
-    };
-  }
-}
-
-class BlockAreaByLandUse {
-  roadAreaInSqM: number; 
-  yardAreaInSqm: number; 
-  builtLandAreaInSqm: number; 
-  sidewalkAreaInSqM: number;
-}
+const DefaultInputConfig = {
+  lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
+  lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
+  frontYardPercent: [20],
+  sideYardPercent: [10],
+  backYardPercent: [45],
+  storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
+  averageUnitSizeInSqM: [100],
+  roadWidthInM: [11, [Validators.required, Validators.min(0), Validators.max(30)]],
+  sidewalkWidthInM: [8, [Validators.required, Validators.min(0), Validators.max(30)]],
+  lanewayWidthInM: [6, [Validators.required, Validators.min(0), Validators.max(30)]],
+  // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
+  maxBlockLengthInM: [100, [Validators.required, Validators.min(1), Validators.max(300)]],
+  includeParks: [false],
+  oneParkPerThisManyHousingBlocks: [4, [Validators.min(2), Validators.max(20)]]
+};
 
 @Component({
   selector: 'app-root',
@@ -69,28 +46,7 @@ export class AppComponent implements OnInit {
   buildingRatio: number;
   floorSpaceIn1SqKm: number;
   lotsIn1SqKm: number;
-  defaultInputConfig = {
-    lotWidth: [10.1, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]], // <--- the FormControl called "lotWidth"
-    lotDepth: [37.2, [Validators.required, Validators.pattern('[0-9]+[.]?[0-9]*$')]],
-    frontYardPercent: [20],
-    sideYardPercent: [10],
-    backYardPercent: [45],
-    storeys: [3, [Validators.required, Validators.min(0), Validators.max(50)]],
-    averageUnitSizeInSqM: [100],
-    roadWidthInM: [11, [Validators.required, Validators.min(0), Validators.max(30)]],
-    sidewalkWidthInM: [8, [Validators.required, Validators.min(0), Validators.max(30)]],
-    lanewayWidthInM: [6, [Validators.required, Validators.min(0), Validators.max(30)]],
-    // If 1 more lot would put us over this length, we will not build it. If lot width > this, invalid.
-    maxBlockLengthInM: [100, [Validators.required, Validators.min(1), Validators.max(300)]],
-    includeParks: [false],
-    oneParkPerThisManyHousingBlocks: [4, [Validators.min(2), Validators.max(20)]]
-  };
-
   stopSubscriptionsSubject: Subject<void>;
-
-  static degreesToRadians(degrees: number) {
-    return degrees * Math.PI / 180;
-  }
 
   constructor(private fb: FormBuilder, private router: Router) {
   }
@@ -117,11 +73,11 @@ export class AppComponent implements OnInit {
   }
 
   private resetInputForm() {
-    this.inputForm = this.fb.group(this.defaultInputConfig, {validator: this.checkThatBlockLengthAllowsAtLeastOneLotValidator()});
+    this.inputForm = this.fb.group(DefaultInputConfig, {validator: this.checkThatBlockLengthAllowsAtLeastOneLotValidator()});
   }
 
   private populateInputFormUsingQueryParamsIfAvailable() {
-    let config = Object.assign({}, this.defaultInputConfig);
+    let config = Object.assign({}, DefaultInputConfig);
 
     if (location.search.startsWith('?')) {
       let queryParams: any = qs.parse(location.search.substring(1));
@@ -303,12 +259,13 @@ export class AppComponent implements OnInit {
     const blockAreaSidewalkOnlyInSqM = this.calculateBlockAreaSidewalkOnlyInSqM(params, blockAreaPrivateLandOnlyInSqM);
     const blockAreaLandWithBuildingsOnItInSqM = lotsPerBlock * this.calculateLandAreaUnder1BuildingInSqM(params);
     const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
-    let blockArea = new BlockAreaByLandUse();
-    blockArea.builtLandAreaInSqm = blockAreaLandWithBuildingsOnItInSqM;
-    blockArea.roadAreaInSqM = blockAreaRoadsOnlyInSqM;
-    blockArea.sidewalkAreaInSqM = blockAreaSidewalkOnlyInSqM;
-    blockArea.yardAreaInSqm = blockAreaYardsOnlyInSqM;
-    return blockArea;
+
+    return {
+      roadAreaInSqM:  blockAreaRoadsOnlyInSqM, 
+      yardAreaInSqm: blockAreaYardsOnlyInSqM, 
+      builtLandAreaInSqm: blockAreaLandWithBuildingsOnItInSqM,
+      sidewalkAreaInSqM: blockAreaSidewalkOnlyInSqM
+    };
   }
 
   private calculateLandAreaUnder1BuildingInSqM(params: VisualizerParameters) {
@@ -429,9 +386,7 @@ export class AppComponent implements OnInit {
   private throwErrorIfAboutToDrawTooManyBuildings(blocksThatFitVerticallyInCanvas: number, blocksThatFitHorizontallyIntoCanvas: number, buildingsPerBlockOnSingleStreet: number) {
     let expectedBuildingsToDraw = blocksThatFitVerticallyInCanvas * blocksThatFitHorizontallyIntoCanvas * buildingsPerBlockOnSingleStreet * 2;
     if (expectedBuildingsToDraw > MaxBuildingsToDraw) {
-      // todo: how do I throw a regular exception?
-      // i.e. new Exception(`Not drawing canvas, too many inner loop iterations (${expectedInnerLoopIterations}) expected`)
-      throw new DOMException();
+      throw new Error(`Not drawing canvas, too many buildings. Would draw ${expectedBuildingsToDraw}, the max is ${MaxBuildingsToDraw}. Params are probably bad`);
     }
   }
 
@@ -499,6 +454,11 @@ export class AppComponent implements OnInit {
       bldgDrawDepth);
 
     ctx.restore();
+  }
+
+  // tslint:disable-next-line:member-ordering
+  static degreesToRadians(degrees: number) {
+    return degrees * Math.PI / 180;
   }
 
   calculateBldgDepth(lotDepth: number, frontYardPercent: number, backYardPercent: number): number {

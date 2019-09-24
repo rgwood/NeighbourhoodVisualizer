@@ -6,10 +6,11 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build --prod",
+    "deploy": "netlify deploy --prod --dir=dist",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "build-deploy": "ng build --prod && netlifyctl deploy --base-directory dist --name neighbourhood"
+    "build-deploy": "npm run build && npm run deploy"
   },
   "private": true,
   "dependencies": {

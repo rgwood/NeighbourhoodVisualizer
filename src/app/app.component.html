@@ -19,29 +19,29 @@
                     <strong>{{sidewalkRatio | percent}}</strong> sidewalks/<a href='http://www.riversidemo.com/publicworks/page/curbs-sidewalks-and-right-way'>ROW</a>,
                     <span *ngIf="inputForm.value.includeParks"><strong>{{parkRatio | percent}}</strong> parks,</span>
                     and <strong>{{buildingRatio
-                  | percent}}</strong> buildings. 1 km<sup>2</sup> of blocks like this could have roughly: 
-                </p> 
-                
+                  | percent}}</strong> buildings. 1 km<sup>2</sup> of blocks like this could have roughly:
+                </p>
+
                 <p></p>
                 <ul>
                   <li><strong>{{floorSpaceIn1SqKm | number:'1.0-0'}}
                     m<sup>2</sup></strong> of floor space</li>
                     <li><strong>{{lotsIn1SqKm |  number:'1.0-0'}}</strong> buildings</li>
                     <li>
-                        <strong>{{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}}</strong> homes with an average size of 
-                        {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m<sup>2</sup> 
+                        <strong>{{floorSpaceIn1SqKm / inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}}</strong> homes with an average size of
+                        {{inputForm.value.averageUnitSizeInSqM | number:'1.0-0'}} m<sup>2</sup>
                         <small>(<em>if</em> the city allows multiple households to live in the same building)</small>
                     </li>
-                </ul> 
-                
+                </ul>
+
                 The max <a href='https://en.wikipedia.org/wiki/Floor_area_ratio'>Floor Area Ratio (FAR)</a> on a given lot
                   is effectively <strong>{{bldgArea * inputForm.value.storeys / (inputForm.value.lotWidth * inputForm.value.lotDepth) |
                   number:'1.0-2'}}</strong>, but the max
                   <em>gross</em> (including streets<span *ngIf="inputForm.value.includeParks"> and parks</span>) FAR of the entire neighbourhood is <strong>{{floorSpaceIn1SqKm / 1000000 | number:'1.0-2'}}</strong>.
-                
+
                 <p>
                   The
-                  <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover 
+                  <span style="color:rgb(0, 82, 110);font-weight:bold">building footprint</span> can cover
                 <strong>{{bldgArea | number:'1.0-0'}} m<sup>2</sup> </strong>
                   at most on a <strong>{{inputForm.value.lotWidth * inputForm.value.lotDepth | number:'1.0-0'}} m<sup>2</sup></strong> lot, or
                   <strong>{{bldgArea / (inputForm.value.lotWidth * inputForm.value.lotDepth) | percent}}</strong>
@@ -50,7 +50,7 @@
                   of floor space per lot.
                 </p>
           </div>
-          <div [hidden]="inputForm.valid ">Parameters not valid, please try adjusting or resetting them. 
+          <div [hidden]="inputForm.valid ">Parameters not valid, please try adjusting or resetting them.
             This often occurs when the maximum block size is too small for a single lot.</div>
         </div>
       </div>

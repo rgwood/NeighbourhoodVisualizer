@@ -32,31 +32,36 @@ const DefaultInputConfig = {
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.css']
 })
 
 export class AppComponent implements OnInit {
-  inputForm: FormGroup;
-  canvas: HTMLCanvasElement;
-  bldgArea: number;
-  yardRatio: number;
-  parkRatio: number;
-  sidewalkRatio: number;
-  roadRatio: number;
-  buildingRatio: number;
-  floorSpaceIn1SqKm: number;
-  lotsIn1SqKm: number;
-  stopSubscriptionsSubject: Subject<void>;
+  title = 'Vancouver Housing Block Visualizer';
+  inputForm!: FormGroup;
+  canvas!: HTMLCanvasElement;
+  bldgArea!: number;
+  yardRatio!: number;
+  parkRatio!: number;
+  sidewalkRatio!: number;
+  roadRatio!: number;
+  buildingRatio!: number;
+  floorSpaceIn1SqKm!: number;
+  lotsIn1SqKm!: number;
+  stopSubscriptionsSubject!: Subject<void>;
 
-  constructor(private fb: FormBuilder, private router: Router) {
-  }
+  constructor(private fb: FormBuilder, private router: Router) {}
 
   ngOnInit(): void {
     this.canvas = document.getElementById('setbackCanvas') as HTMLCanvasElement;
     this.populateInputFormUsingQueryParamsIfAvailable();
     this.subscribeToInputFormChanges();
+  }
+
+  ngAfterViewChecked(): void {
+    // do this after ngOnInit because input form not ready then
     this.calculateStatsAndDrawCanvas();
   }
+
 
   resetForm() {
     this.cleanUpSubscriptions();
@@ -82,7 +87,7 @@ export class AppComponent implements OnInit {
     if (location.search.startsWith('?')) {
       let queryParams: any = qs.parse(location.search.substring(1));
 
-      let tryParseNumber = function(queryParam, fallback) {
+      let tryParseNumber = function(queryParam: any, fallback: any) {
         // special case because 0 will not evaluate to truthy, and thus the code below will use the fallback...
         if (queryParam === '0') {
           return 0;
@@ -102,13 +107,13 @@ export class AppComponent implements OnInit {
       config.sidewalkWidthInM = tryParseNumber(queryParams.sw, config.sidewalkWidthInM);
       config.lanewayWidthInM = tryParseNumber(queryParams.law, config.lanewayWidthInM);
       config.maxBlockLengthInM = tryParseNumber(queryParams.mbl, config.maxBlockLengthInM);
-      
+
       if (queryParams.ip !== undefined) {
         config.includeParks = [queryParams.ip.toLowerCase() === 'true'];
       }
 
       config.oneParkPerThisManyHousingBlocks = tryParseNumber(queryParams.pphb, config.oneParkPerThisManyHousingBlocks);
-    } 
+    }
     this.inputForm = this.fb.group(config, {validator: this.checkThatBlockLengthAllowsAtLeastOneLotValidator()});
   }
 
@@ -119,6 +124,8 @@ export class AppComponent implements OnInit {
       if (blockLength.value < lotWidth.value) {
         return {blockLengthTooShort: true};
       }
+
+      return {};
     };
   }
 
@@ -155,18 +162,18 @@ export class AppComponent implements OnInit {
 
   private getStronglyTypedParametersFromForm() {
     let vp = new VisualizerParameters();
-    vp.frontYardPercent = this.inputForm.get('frontYardPercent').value;
-    vp.sideYardPercent = this.inputForm.get('sideYardPercent').value;
-    vp.backYardPercent = this.inputForm.get('backYardPercent').value;
-    vp.lotDepthInM = Number(this.inputForm.get('lotDepth').value);
-    vp.lotWidthInM = Number(this.inputForm.get('lotWidth').value);
-    vp.storeys = this.inputForm.get('storeys').value;
-    vp.roadWidthInM = this.inputForm.get('roadWidthInM').value;
-    vp.lanewayWidthInM = this.inputForm.get('lanewayWidthInM').value;
-    vp.sidewalkWidthInM = this.inputForm.get('sidewalkWidthInM').value;
-    vp.maxBlockLengthInM = this.inputForm.get('maxBlockLengthInM').value;
-    vp.includeParks = this.inputForm.get('includeParks').value;
-    vp.oneParkPerThisManyHousingBlocks = this.inputForm.get('oneParkPerThisManyHousingBlocks').value;
+    vp.frontYardPercent = this.inputForm.get('frontYardPercent')!.value;
+    vp.sideYardPercent = this.inputForm.get('sideYardPercent')!.value;
+    vp.backYardPercent = this.inputForm.get('backYardPercent')!.value;
+    vp.lotDepthInM = Number(this.inputForm.get('lotDepth')!.value);
+    vp.lotWidthInM = Number(this.inputForm.get('lotWidth')!.value);
+    vp.storeys = this.inputForm.get('storeys')!.value;
+    vp.roadWidthInM = this.inputForm.get('roadWidthInM')!.value;
+    vp.lanewayWidthInM = this.inputForm.get('lanewayWidthInM')!.value;
+    vp.sidewalkWidthInM = this.inputForm.get('sidewalkWidthInM')!.value;
+    vp.maxBlockLengthInM = this.inputForm.get('maxBlockLengthInM')!.value;
+    vp.includeParks = this.inputForm.get('includeParks')!.value;
+    vp.oneParkPerThisManyHousingBlocks = this.inputForm.get('oneParkPerThisManyHousingBlocks')!.value;
     return vp;
   }
 
@@ -188,11 +195,11 @@ export class AppComponent implements OnInit {
     | |  _ _ _ _ _ _  |
     | | | | | | | | | |
     | | |_|_|_|_|_|_| |
-    |     _ _ _ _ _ _   
+    |     _ _ _ _ _ _
     | | | | | | | | | |
     | | |_|_|_|_|_|_| |
     | |_______________|
-    
+
     */
 
     let maxNumOfAdjacentLots = this.getMaxNumOfAdjacentLots(params);
@@ -211,11 +218,11 @@ export class AppComponent implements OnInit {
     let buildingAreaInSqM = singleBlockAreaByLandUse.builtLandAreaInSqm * numOfHousingBlocks;
     let sidewalkAreaInSqM = singleBlockAreaByLandUse.sidewalkAreaInSqM * numOfBlocks;
 
-    
+
     let lotsInBlock = this.getNumberOfLotsPerBlock(params);
     let blockWidthInM = this.calculateBlockWidthInM(params);
     let blockDepthInM = this.calculateBlockDepthInM(params);
-    
+
     let parkWidthInM = maxNumOfAdjacentLots * params.lotWidthInM;
     let parkDepthInM = params.lotDepthInM + params.lanewayWidthInM + params.lotDepthInM;
     let parkAreaInSqM = parkWidthInM * parkDepthInM * numOfParkBlocks;
@@ -261,8 +268,8 @@ export class AppComponent implements OnInit {
     const blockAreaYardsOnlyInSqM = blockAreaPrivateLandOnlyInSqM - blockAreaLandWithBuildingsOnItInSqM;
 
     return {
-      roadAreaInSqM:  blockAreaRoadsOnlyInSqM, 
-      yardAreaInSqm: blockAreaYardsOnlyInSqM, 
+      roadAreaInSqM:  blockAreaRoadsOnlyInSqM,
+      yardAreaInSqm: blockAreaYardsOnlyInSqM,
       builtLandAreaInSqm: blockAreaLandWithBuildingsOnItInSqM,
       sidewalkAreaInSqM: blockAreaSidewalkOnlyInSqM
     };
@@ -280,7 +287,7 @@ export class AppComponent implements OnInit {
     const blockHeight = (2 * params.sidewalkWidthInM + 2 * params.lotDepthInM + params.lanewayWidthInM);
     const totalBlockArea = blockWidth * blockHeight; // whole block from sidewalks inward
     const lanewayArea = (maxNumOfAdjacentLots * params.lotWidthInM) * params.lanewayWidthInM;
-    return totalBlockArea - blockAreaPrivateLandOnlyInSqM - lanewayArea; 
+    return totalBlockArea - blockAreaPrivateLandOnlyInSqM - lanewayArea;
   }
 
   // assume sidewalk surrounds entire block, even at laneway entrance
@@ -306,10 +313,10 @@ export class AppComponent implements OnInit {
 
   drawCanvas(params: VisualizerParameters): void {
     // console.log(`canvas height:${this.canvas.height} width:${this.canvas.width}`);
-    const ctx = this.canvas.getContext('2d');
+    const ctx = this.canvas.getContext('2d')!;
     let buildingsPerBlockOnSingleStreet = this.getMaxNumOfAdjacentLots(params);
     let blockLengthInM = buildingsPerBlockOnSingleStreet * params.lotWidthInM;
-    
+
     ctx.save();
 
     this.clearCanvas();
@@ -343,7 +350,7 @@ export class AppComponent implements OnInit {
         ctx.translate(roadDrawWidth, 0);
 
         ctx.save();
-        
+
         this.drawSidewalks(ctx, sidewalkDrawWidth, blockDrawLength, blockDrawHeight);
 
         ctx.translate(sidewalkDrawWidth, sidewalkDrawWidth);
@@ -369,7 +376,7 @@ export class AppComponent implements OnInit {
   }
 
   private clearCanvas() {
-    const ctx = this.canvas.getContext('2d');
+    const ctx = this.canvas.getContext('2d')!;
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -395,7 +402,7 @@ export class AppComponent implements OnInit {
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  private drawBlockOfBuildings(ctx: CanvasRenderingContext2D, params: VisualizerParameters, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number, 
+  private drawBlockOfBuildings(ctx: CanvasRenderingContext2D, params: VisualizerParameters, roadDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lotDrawWidth: number,
     lotDrawDepth: number, lanewayDrawWidth: number) {
     ctx.save();
     this.drawRowOfBuildings(ctx, params, roadDrawWidth, buildingsPerBlockOnSingleStreet, lotDrawWidth, lotDrawDepth, true);

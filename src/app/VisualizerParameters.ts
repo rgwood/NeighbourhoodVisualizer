@@ -1,17 +1,17 @@
 export class VisualizerParameters {
-  frontYardPercent: number;
-  sideYardPercent: number;
-  backYardPercent: number;
-  lotDepthInM: number;
-  lotWidthInM: number;
-  storeys: number;
-  roadWidthInM: number;
-  lanewayWidthInM: number;
-  sidewalkWidthInM: number;
-  maxBlockLengthInM: number;
-  includeParks: boolean;
-  oneParkPerThisManyHousingBlocks: number;
-  
+  frontYardPercent!: number;
+  sideYardPercent!: number;
+  backYardPercent!: number;
+  lotDepthInM!: number;
+  lotWidthInM!: number;
+  storeys!: number;
+  roadWidthInM!: number;
+  lanewayWidthInM!: number;
+  sidewalkWidthInM!: number;
+  maxBlockLengthInM!: number;
+  includeParks!: boolean;
+  oneParkPerThisManyHousingBlocks!: number;
+
   // Same data but with much shorter names, for use in query parameters
   toQueryParamFormat() {
     return {

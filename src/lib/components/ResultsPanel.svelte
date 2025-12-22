@@ -1,7 +1,7 @@
 <script lang="ts">
   import { formatPercent, formatNumber } from '../utils/formatters';
 
-  export let canvas: HTMLCanvasElement;
+  export let canvas: HTMLCanvasElement | undefined;
   export let isValid: boolean;
   export let yardRatio: number;
   export let roadRatio: number;

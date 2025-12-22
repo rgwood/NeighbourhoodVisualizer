@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount } from 'svelte';
   import { VisualizerParameters } from './lib/models/VisualizerParameters';
   import { calculateStatistics } from './lib/utils/statisticsCalculator';
   import { drawCanvas } from './lib/utils/canvasRenderer';
@@ -9,72 +9,78 @@
   import OptionsPanel from './lib/components/OptionsPanel.svelte';
   import ResultsPanel from './lib/components/ResultsPanel.svelte';
 
-  // Form state (replaces FormGroup)
-  let lotWidth = DefaultInputConfig.lotWidth;
-  let lotDepth = DefaultInputConfig.lotDepth;
-  let frontYardPercent = DefaultInputConfig.frontYardPercent;
-  let sideYardPercent = DefaultInputConfig.sideYardPercent;
-  let backYardPercent = DefaultInputConfig.backYardPercent;
-  let storeys = DefaultInputConfig.storeys;
-  let averageUnitSizeInSqM = DefaultInputConfig.averageUnitSizeInSqM;
-  let roadWidthInM = DefaultInputConfig.roadWidthInM;
-  let sidewalkWidthInM = DefaultInputConfig.sidewalkWidthInM;
-  let lanewayWidthInM = DefaultInputConfig.lanewayWidthInM;
-  let maxBlockLengthInM = DefaultInputConfig.maxBlockLengthInM;
-  let includeParks = DefaultInputConfig.includeParks;
-  let oneParkPerThisManyHousingBlocks = DefaultInputConfig.oneParkPerThisManyHousingBlocks;
+  // Form state using Svelte 5 $state rune
+  let lotWidth = $state(DefaultInputConfig.lotWidth);
+  let lotDepth = $state(DefaultInputConfig.lotDepth);
+  let frontYardPercent = $state(DefaultInputConfig.frontYardPercent);
+  let sideYardPercent = $state(DefaultInputConfig.sideYardPercent);
+  let backYardPercent = $state(DefaultInputConfig.backYardPercent);
+  let storeys = $state(DefaultInputConfig.storeys);
+  let averageUnitSizeInSqM = $state(DefaultInputConfig.averageUnitSizeInSqM);
+  let roadWidthInM = $state(DefaultInputConfig.roadWidthInM);
+  let sidewalkWidthInM = $state(DefaultInputConfig.sidewalkWidthInM);
+  let lanewayWidthInM = $state(DefaultInputConfig.lanewayWidthInM);
+  let maxBlockLengthInM = $state(DefaultInputConfig.maxBlockLengthInM);
+  let includeParks = $state(DefaultInputConfig.includeParks);
+  let oneParkPerThisManyHousingBlocks = $state(DefaultInputConfig.oneParkPerThisManyHousingBlocks);
 
   // Calculated statistics
-  let bldgArea = 0;
-  let yardRatio = 0;
-  let roadRatio = 0;
-  let sidewalkRatio = 0;
-  let parkRatio = 0;
-  let buildingRatio = 0;
-  let floorSpaceIn1SqKm = 0;
-  let lotsIn1SqKm = 0;
+  let bldgArea = $state(0);
+  let yardRatio = $state(0);
+  let roadRatio = $state(0);
+  let sidewalkRatio = $state(0);
+  let parkRatio = $state(0);
+  let buildingRatio = $state(0);
+  let floorSpaceIn1SqKm = $state(0);
+  let lotsIn1SqKm = $state(0);
 
-  let canvas: HTMLCanvasElement;
+  let canvas = $state<HTMLCanvasElement | undefined>(undefined);
   let urlUpdateTimer: number;
 
-  // Create params object from individual values
-  $: params = createParams();
+  // Create params object from individual values using $derived
+  const params = $derived(createParams());
 
-  // Validate
-  $: isValid = validateBlockLength(maxBlockLengthInM, lotWidth) &&
-               storeys >= 0 && storeys <= 50 &&
-               roadWidthInM >= 0 && roadWidthInM <= 30 &&
-               sidewalkWidthInM >= 0 && sidewalkWidthInM <= 30 &&
-               lanewayWidthInM >= 0 && lanewayWidthInM <= 30 &&
-               maxBlockLengthInM >= 1 && maxBlockLengthInM <= 300 &&
-               oneParkPerThisManyHousingBlocks >= 2 && oneParkPerThisManyHousingBlocks <= 20;
+  // Validate using $derived
+  const isValid = $derived(
+    validateBlockLength(maxBlockLengthInM, lotWidth) &&
+    storeys >= 0 && storeys <= 50 &&
+    roadWidthInM >= 0 && roadWidthInM <= 30 &&
+    sidewalkWidthInM >= 0 && sidewalkWidthInM <= 30 &&
+    lanewayWidthInM >= 0 && lanewayWidthInM <= 30 &&
+    maxBlockLengthInM >= 1 && maxBlockLengthInM <= 300 &&
+    oneParkPerThisManyHousingBlocks >= 2 && oneParkPerThisManyHousingBlocks <= 20
+  );
 
-  // Calculate when params change
-  $: if (isValid && canvas) {
-    try {
-      const stats = calculateStatistics(params);
-      bldgArea = stats.bldgArea;
-      yardRatio = stats.yardRatio;
-      roadRatio = stats.roadRatio;
-      sidewalkRatio = stats.sidewalkRatio;
-      parkRatio = stats.parkRatio;
-      buildingRatio = stats.buildingRatio;
-      floorSpaceIn1SqKm = stats.floorSpaceIn1SqKm;
-      lotsIn1SqKm = stats.lotsIn1SqKm;
+  // Calculate when params change using $effect
+  $effect(() => {
+    if (isValid && canvas) {
+      try {
+        const stats = calculateStatistics(params);
+        bldgArea = stats.bldgArea;
+        yardRatio = stats.yardRatio;
+        roadRatio = stats.roadRatio;
+        sidewalkRatio = stats.sidewalkRatio;
+        parkRatio = stats.parkRatio;
+        buildingRatio = stats.buildingRatio;
+        floorSpaceIn1SqKm = stats.floorSpaceIn1SqKm;
+        lotsIn1SqKm = stats.lotsIn1SqKm;
 
-      drawCanvas(canvas, params);
-    } catch (error) {
-      console.error('Error calculating or drawing:', error);
+        drawCanvas(canvas, params);
+      } catch (error) {
+        console.error('Error calculating or drawing:', error);
+      }
     }
-  }
+  });
 
-  // Debounced URL update
-  $: if (isValid && params) {
-    clearTimeout(urlUpdateTimer);
-    urlUpdateTimer = setTimeout(() => {
-      updateURLWithParameters(params);
-    }, 250);
-  }
+  // Debounced URL update using $effect
+  $effect(() => {
+    if (isValid && params) {
+      clearTimeout(urlUpdateTimer);
+      urlUpdateTimer = setTimeout(() => {
+        updateURLWithParameters(params);
+      }, 250);
+    }
+  });
 
   onMount(() => {
     const urlParams = loadParametersFromURL();
@@ -93,10 +99,6 @@
       includeParks = urlParams.includeParks ?? includeParks;
       oneParkPerThisManyHousingBlocks = urlParams.oneParkPerThisManyHousingBlocks ?? oneParkPerThisManyHousingBlocks;
     }
-  });
-
-  onDestroy(() => {
-    clearTimeout(urlUpdateTimer);
   });
 
   function createParams(): VisualizerParameters {

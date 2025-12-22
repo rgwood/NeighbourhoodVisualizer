@@ -19,12 +19,12 @@
   export let isValid: boolean;
 </script>
 
-<div class="bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-400 rounded-lg">
-  <div class="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 font-semibold flex justify-between items-center">
+<div class="bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-400 rounded-lg overflow-hidden">
+  <div class="bg-blue-500 dark:bg-blue-600 text-white px-4 py-3 font-semibold flex justify-between items-center min-h-[48px]">
     <span>Options</span>
     <button
       on:click={() => dispatch('reset')}
-      class="bg-white dark:bg-gray-700 text-blue-500 dark:text-blue-300 px-3 py-1 rounded text-sm font-normal hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
+      class="bg-white dark:bg-gray-700 text-blue-500 dark:text-blue-300 px-2 py-0.5 rounded text-xs font-normal hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
     >
       Reset?
     </button>

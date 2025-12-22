@@ -18,8 +18,8 @@
   export let includeParks: boolean;
 </script>
 
-<div class="bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-400 rounded-lg">
-  <div class="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 font-semibold">
+<div class="bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-400 rounded-lg overflow-hidden">
+  <div class="bg-blue-500 dark:bg-blue-600 text-white px-4 py-3 font-semibold flex items-center min-h-[48px]">
     Results
   </div>
   <div class="p-4">

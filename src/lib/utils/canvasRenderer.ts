@@ -1,8 +1,7 @@
 import type { VisualizerParameters } from '../models/VisualizerParameters';
 import {
   getBuildingColour, getYardColour, getRoadColour, getParkColour, getSidewalkColour,
-  getBuildingShadowColour, getCenterLineColour, getRoadMarkingColour, getCrosswalkColour,
-  MaxBuildingsToDraw
+  getBuildingShadowColour, getCenterLineColour, MaxBuildingsToDraw
 } from '../constants';
 import { calculateBldgDepth, calculateBldgWidth } from './statisticsCalculator';
 
@@ -164,34 +163,39 @@ function drawRoadMarkings(
   const totalBlockWidth = blockDrawLength + 2 * sidewalkDrawWidth;
   const totalBlockHeight = blockDrawHeight + 2 * sidewalkDrawWidth;
 
-  // Draw horizontal road center lines
   ctx.strokeStyle = getCenterLineColour();
   ctx.lineWidth = Math.max(1.5, roadDrawWidth * 0.035);
   ctx.setLineDash([roadDrawWidth * 0.4, roadDrawWidth * 0.25]);
 
+  // Draw horizontal road center lines (between intersections only)
   for (let i = 0; i <= blocksThatFitVerticallyInCanvas; i++) {
     const roadY = i * (totalBlockHeight + roadDrawWidth) + roadDrawWidth / 2;
-    ctx.beginPath();
-    ctx.moveTo(0, roadY);
-    ctx.lineTo(canvas.width, roadY);
-    ctx.stroke();
+
+    for (let j = 0; j <= blocksThatFitHorizontallyIntoCanvas; j++) {
+      const segmentStartX = j * (totalBlockWidth + roadDrawWidth) + roadDrawWidth;
+      const segmentEndX = segmentStartX + totalBlockWidth;
+
+      ctx.beginPath();
+      ctx.moveTo(segmentStartX, roadY);
+      ctx.lineTo(segmentEndX, roadY);
+      ctx.stroke();
+    }
   }
 
-  // Draw vertical road center lines
+  // Draw vertical road center lines (between intersections only)
   for (let j = 0; j <= blocksThatFitHorizontallyIntoCanvas; j++) {
     const roadX = j * (totalBlockWidth + roadDrawWidth) + roadDrawWidth / 2;
-    ctx.beginPath();
-    ctx.moveTo(roadX, 0);
-    ctx.lineTo(roadX, canvas.height);
-    ctx.stroke();
+
+    for (let i = 0; i <= blocksThatFitVerticallyInCanvas; i++) {
+      const segmentStartY = i * (totalBlockHeight + roadDrawWidth) + roadDrawWidth;
+      const segmentEndY = segmentStartY + totalBlockHeight;
+
+      ctx.beginPath();
+      ctx.moveTo(roadX, segmentStartY);
+      ctx.lineTo(roadX, segmentEndY);
+      ctx.stroke();
+    }
   }
-
-  // Draw lane edge markings (solid white lines)
-  ctx.strokeStyle = getRoadMarkingColour();
-  ctx.lineWidth = Math.max(0.8, roadDrawWidth * 0.02);
-  ctx.setLineDash([]);
-
-  const edgeOffset = roadDrawWidth * 0.15;
 
   ctx.restore();
 }

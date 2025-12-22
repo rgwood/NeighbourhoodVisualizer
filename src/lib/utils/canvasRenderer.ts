@@ -1,5 +1,5 @@
 import type { VisualizerParameters } from '../models/VisualizerParameters';
-import { BuildingColour, YardColour, RoadColour, ParkColour, SidewalkColour, MaxBuildingsToDraw } from '../constants';
+import { getBuildingColour, getYardColour, getRoadColour, getParkColour, getSidewalkColour, MaxBuildingsToDraw } from '../constants';
 import { calculateBldgDepth, calculateBldgWidth } from './statisticsCalculator';
 
 export function drawCanvas(canvas: HTMLCanvasElement, params: VisualizerParameters): void {
@@ -71,12 +71,12 @@ function clearCanvas(canvas: HTMLCanvasElement) {
 }
 
 function drawSidewalks(ctx: CanvasRenderingContext2D, sidewalkDrawWidth: number, blockDrawLength: number, blockDrawHeight: number) {
-  ctx.fillStyle = SidewalkColour;
+  ctx.fillStyle = getSidewalkColour();
   ctx.fillRect(0, 0, 2 * sidewalkDrawWidth + blockDrawLength, 2 * sidewalkDrawWidth + blockDrawHeight);
 }
 
 function drawParkBlock(ctx: CanvasRenderingContext2D, blockDrawLength: number, blockDrawHeight: number) {
-  ctx.fillStyle = ParkColour;
+  ctx.fillStyle = getParkColour();
   ctx.fillRect(0, 0, blockDrawLength, blockDrawHeight);
 }
 
@@ -88,7 +88,7 @@ function throwErrorIfAboutToDrawTooManyBuildings(blocksThatFitVerticallyInCanvas
 }
 
 function drawBackground(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
-  ctx.fillStyle = RoadColour;
+  ctx.fillStyle = getRoadColour();
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -109,7 +109,7 @@ function drawBlockOfBuildings(ctx: CanvasRenderingContext2D, params: VisualizerP
 
 function drawLaneway(ctx: CanvasRenderingContext2D, lotDrawDepth: number, lotDrawWidth: number, buildingsPerBlockOnSingleStreet: number, lanewayDrawWidth: number) {
   ctx.save();
-  ctx.fillStyle = RoadColour;
+  ctx.fillStyle = getRoadColour();
   ctx.translate(0, lotDrawDepth);
   ctx.fillRect(0, 0, lotDrawWidth * buildingsPerBlockOnSingleStreet, lanewayDrawWidth);
   ctx.restore();
@@ -134,7 +134,7 @@ function drawBuilding(ctx: CanvasRenderingContext2D, params: VisualizerParameter
 
   ctx.strokeRect(0, 0, lotDrawWidth, lotDrawDepth);
 
-  ctx.fillStyle = YardColour;
+  ctx.fillStyle = getYardColour();
   ctx.fillRect(1, 1, lotDrawWidth - 2, lotDrawDepth - 2);
 
   const bldgDrawDepth = calculateBldgDepth(lotDrawDepth, params.frontYardPercent, params.backYardPercent);
@@ -143,7 +143,7 @@ function drawBuilding(ctx: CanvasRenderingContext2D, params: VisualizerParameter
   const frontYardDrawDepth = lotDrawDepth * params.frontYardPercent / 100;
   const sideyardDrawDepth = lotDrawWidth * params.sideYardPercent / 100;
 
-  ctx.fillStyle = BuildingColour;
+  ctx.fillStyle = getBuildingColour();
   ctx.fillRect(sideyardDrawDepth,
     frontYardDrawDepth,
     bldgDrawWidth,

@@ -162,10 +162,10 @@
 
 <div class="layout-container">
   <div class="mb-6">
-    <h1 class="text-3xl font-bold">Neighbourhood Visualizer</h1>
-    <p class="text-gray-600">
+    <h1 class="text-3xl font-bold dark:text-white">Neighbourhood Visualizer</h1>
+    <p class="text-gray-600 dark:text-gray-300">
       A tool to quickly estimate the effects of land use policy and road width.
-      <a href="https://github.com/rgwood/NeighbourhoodVisualizer" class="text-blue-600 underline">
+      <a href="https://github.com/rgwood/NeighbourhoodVisualizer" class="text-blue-600 dark:text-blue-400 underline">
         Source code available
       </a>.
     </p>

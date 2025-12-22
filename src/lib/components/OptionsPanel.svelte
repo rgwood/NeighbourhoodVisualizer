@@ -19,18 +19,18 @@
   export let isValid: boolean;
 </script>
 
-<div class="bg-white border-2 border-blue-500 rounded-lg">
-  <div class="bg-blue-500 text-white px-4 py-2 font-semibold flex justify-between items-center">
+<div class="bg-white dark:bg-gray-800 border-2 border-blue-500 dark:border-blue-400 rounded-lg">
+  <div class="bg-blue-500 dark:bg-blue-600 text-white px-4 py-2 font-semibold flex justify-between items-center">
     <span>Options</span>
     <button
       on:click={() => dispatch('reset')}
-      class="bg-white text-blue-500 px-3 py-1 rounded text-sm font-normal hover:bg-blue-50 transition-colors"
+      class="bg-white dark:bg-gray-700 text-blue-500 dark:text-blue-300 px-3 py-1 rounded text-sm font-normal hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors"
     >
       Reset?
     </button>
   </div>
 
-  <div class="p-4 space-y-6 text-sm">
+  <div class="p-4 space-y-6 text-sm dark:text-gray-200">
     <!-- Setback Requirements -->
     <div>
       <h5 class="text-base font-semibold mb-3">Setback Requirements</h5>
@@ -102,7 +102,7 @@
 
       <label for="sidewalkWidth" class="block mb-2 mt-3">
         Sidewalk/<a href="http://www.riversidemo.com/publicworks/page/curbs-sidewalks-and-right-way"
-                     class="text-blue-600 underline">ROW</a> width: <strong>{sidewalkWidthInM}m</strong>
+                     class="text-blue-600 dark:text-blue-400 underline">ROW</a> width: <strong>{sidewalkWidthInM}m</strong>
       </label>
       <input
         id="sidewalkWidth"
@@ -158,7 +158,7 @@
           type="number"
           step="0.1"
           bind:value={lotWidth}
-          class="w-full px-3 py-2 border rounded mt-1"
+          class="w-full px-3 py-2 border dark:border-gray-600 rounded mt-1 dark:bg-gray-700 dark:text-white"
         />
       </label>
 
@@ -168,7 +168,7 @@
           type="number"
           step="0.1"
           bind:value={lotDepth}
-          class="w-full px-3 py-2 border rounded mt-1"
+          class="w-full px-3 py-2 border dark:border-gray-600 rounded mt-1 dark:bg-gray-700 dark:text-white"
         />
       </label>
     </div>
